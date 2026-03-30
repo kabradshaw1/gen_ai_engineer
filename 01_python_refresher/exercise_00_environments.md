@@ -6,14 +6,48 @@ Before you write any exercises, get comfortable with the three ways you'll run P
 
 ## Setup
 
+### Environment with Miniconda
+
+Create a conda environment for this project:
+
 ```bash
-cd 01_python_refresher
-python -m venv venv
-source venv/bin/activate    # On macOS/Linux
-pip install ipython jupyter pandas numpy
+conda create -n gen_ai python=3.11 -y
+conda activate gen_ai
 ```
 
-You now have a virtual environment. Think of it like Go modules or node_modules — isolated dependencies per project.
+**Conda vs venv — what's the difference?**
+
+You'll see `python -m venv` in most tutorials. Both solve the same problem (isolated dependencies), but conda is more powerful:
+
+- **venv** — Python-only. Creates a folder with a Python binary and `site-packages`. Only manages Python packages via `pip`.
+- **conda** — Manages Python itself AND system-level C/Fortran libraries. Useful for data science where numpy, scipy, and pytorch depend on compiled code. Conda installs pre-built binaries so you don't need a C compiler.
+
+In Go terms: `venv` is like `GOPATH` per project. Conda is more like having separate Go toolchain installs with different system libraries.
+
+**`conda install` vs `pip install`:**
+- Use `conda install` for packages with C dependencies (numpy, pandas, scipy, pytorch) — conda handles the compiled bits better
+- Use `pip install` for everything else. Pip works fine inside a conda environment.
+- Don't mix both for the same package — pick one.
+
+```bash
+conda activate gen_ai
+conda install ipython jupyter pandas numpy -y
+```
+
+**Verify your setup:**
+```bash
+which python        # Should point to your conda env, not system Python
+python --version    # Should be 3.11.x
+conda list          # Shows installed packages
+```
+
+**Useful conda commands:**
+```bash
+conda env list              # List all environments
+conda activate gen_ai       # Activate
+conda deactivate            # Back to base
+conda install <package> -y  # Install a package
+```
 
 ---
 
@@ -164,8 +198,8 @@ For the unified notebooks (NLP section), the notebook IS the deliverable — it'
 
 ## Action Checklist
 
-- [ ] Create and activate a virtual environment
-- [ ] Install ipython and jupyter
+- [ ] Create and activate conda environment (`conda create -n gen_ai python=3.11 -y`)
+- [ ] Install ipython and jupyter (`conda install ipython jupyter pandas numpy -y`)
 - [ ] Open ipython, explore a list with Tab completion, then exit
 - [ ] Create `hello.py`, run it, then import from it in ipython
 - [ ] Create a throwaway Jupyter notebook, make a markdown cell and a code cell, run both
