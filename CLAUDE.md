@@ -13,12 +13,14 @@ This is a portfolio project for a Gen AI Engineer job application. Kyle is the s
 
 ## Code Authorship Rules
 
-- **NEVER generate Python implementation files (.py, .ipynb).** Kyle writes all Python himself.
-- Code snippets in exercise guide markdown files and chat are fine — Kyle will type them out and make sure he understands them before moving on.
+- **Kyle writes all portfolio code himself.** His deliverable is his own retyped notebooks with his own comments.
+- **Claude CAN generate reference `.ipynb` notebooks** for the Python refresher section. These are learning materials (like exercise guides), not Kyle's work.
+- **Claude CANNOT generate Kyle's implementation code** for other sections (NLP, RAG app, etc.).
+- Code snippets in chat are fine — Kyle will type them out and make sure he understands them before moving on.
 
 ## What Claude SHOULD Do
 
-- **Generate exercise guide markdown files** when Kyle says he needs to learn something (see format below).
+- **Generate reference Jupyter notebooks** when Kyle says he needs to learn or refresh something (see notebook format below).
 - **Generate infrastructure/config files** — .gitignore, Dockerfile, docker-compose.yml, requirements.txt, CLAUDE.md, README files.
 - **Review Kyle's code** when asked — point out issues, suggest improvements, explain errors.
 - **Answer questions** about concepts, libraries, or approaches.
@@ -26,33 +28,32 @@ This is a portfolio project for a Gen AI Engineer job application. Kyle is the s
 
 ## Trigger for Learning Guides
 
-Only generate exercise guides when Kyle **explicitly states** he needs to learn or refresh something. Don't proactively create learning materials for sections he hasn't asked about yet.
+Only generate reference notebooks when Kyle **explicitly states** he needs to learn or refresh something. Don't proactively create learning materials for sections he hasn't asked about yet.
 
-## Exercise Guide Format
+## Reference Notebook Format
 
-When creating learning materials, follow this established pattern:
+Each notebook follows a consistent repeating pattern:
 
-### File structure
-- One `EXERCISES.md` index file per section linking to individual exercises
-- Separate markdown files per exercise: `exercise_00_topic.md`, `exercise_01_topic.md`, etc.
+### Top cell (markdown)
+Title, one-sentence goal, prereqs.
 
-### Each exercise file contains
-1. **Go/TS comparison framing** — every concept starts with "In Go you'd..." or "In TS you'd..." to anchor new ideas to what Kyle already knows
-2. **Numbered action steps** with runnable code snippets to type into ipython or a .py file
-3. **"Write a comment" prompts** — after each concept, tell Kyle to write a comment in his own words explaining what he just learned. This is how he internalizes the material.
-4. **A .py file skeleton** — shows the structure of the final script and where Kyle's comments should go
-5. **Action checklist** at the bottom — concrete checkboxes for what to do
+### Per concept (repeating)
+1. **Markdown cell — Go/TS comparison:** "In Go you'd do X. In Python, here's what's different and why."
+2. **Code cell — example:** Complete, runnable code demonstrating the concept.
+3. **Code cell — experiment:** A variation or "try this" prompt.
+4. **Markdown cell — "In your own words":** Prompt for Kyle to write his own explanation.
 
-### Kyle's workflow for each exercise
-1. Read the exercise guide
-2. Explore in ipython — try the snippets, experiment, break things
-3. Write the .py file — type the code, add comments in own words
-4. Run it — `python filename.py`
-5. Commit
+### Bottom cell (markdown)
+Quick recap checklist of concepts covered.
+
+## Kyle's Workflow
+
+1. Open the reference notebook (Claude-generated)
+2. Create his own notebook — retype code, run it, write own comments
+3. Commit his version
 
 ## Project Structure
 
-See README.md for the full layout. Three main sections:
-- `01_python_refresher/` — Kyle writes all scripts
-- `02_nlp_fundamentals/` — Kyle writes all scripts and the notebook
-- `03_rag_app/` — Kyle writes the Python app code; Claude can help with Docker/config
+- `01_python_refresher/` — Reference notebooks + Kyle's retyped versions
+- `_reference/` — Archived original approach (markdown guides, `.py` files)
+- Other sections (NLP, RAG app) — TBD, will be addressed after validating the notebook format
