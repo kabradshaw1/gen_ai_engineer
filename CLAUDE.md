@@ -19,7 +19,8 @@ This is a portfolio project for a Gen AI Engineer job application. Kyle is the s
 
 ## Trigger for Learning Guides
 
-Only generate EXERCISES.md / action plan files when Kyle **explicitly states** he needs to learn or refresh something. Don't proactively create learning materials for sections he hasn't asked about yet.
+Only generate EXERCISES.md / action plan files when Kyle **explicitly states** he needs to learn or refresh something. Don't proactively create learning materials for sections he hasn't asked about yet.  When writing EXERCISES.md 
+files frame them in the context of how python compares to golang and typescript.
 
 ## Project Structure
 

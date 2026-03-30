@@ -23,8 +23,9 @@ Practical rules of thumb from Go/TS:
     - Where you'd use a tuple in TS ([string, number]) → use a tuple in Python        
 (immutable, fixed structure)     
 
-The big gotchaÑ because lists hold references, a = b doesn't copy - both 
-variables point to the same list.  
+The big gotcha: because lists hold references, a = b doesn't copy - both 
+variables point to the same list.  use a = b.copy() or a = b[:] for a shallow copy.
+A shallow copy creates a new list, but the elements inside still point to 
 """
 numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
