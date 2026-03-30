@@ -25,10 +25,29 @@ Practical rules of thumb from Go/TS:
 
 The big gotcha: because lists hold references, a = b doesn't copy - both 
 variables point to the same list.  use a = b.copy() or a = b[:] for a shallow copy.
-A shallow copy creates a new list, but the elements inside still point to 
+A shallow copy creates a new list, but the elements inside still point to the 
+orginal data.
+
+I deep copy creates a completely new set of data.  This will consume more resources.
+Use shallow copy when the data is immutable or a flat list.  Use deep copy when you have}
+nested structures, objects inside of objects, or you need isolation.  
+
 """
+
+a = [1, 2, 3]
+b = a
+b.append(4)
+print(a)
+
 numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 print(numbers)
 
-numbers[::-1]
+# prints the list in reverse order
+print(numbers[::-1])
+
+# prints every other element
+print(numbers[:2])
+
+print()
+
