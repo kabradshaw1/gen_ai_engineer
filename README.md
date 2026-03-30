@@ -13,7 +13,7 @@ See [`01_python_refresher/README.md`](./01_python_refresher/README.md) for detai
 | Section | Description | Status |
 |---------|-------------|--------|
 | `01_python_refresher/` | Core Python via Jupyter notebooks | In progress |
-| NLP Fundamentals | Tokenization, embeddings, NER, text classification | Planned |
+| `02_nlp_fundamentals/` | Tokenization, embeddings, NER, text classification | In progress |
 | RAG App | FastAPI + LangChain + ChromaDB | Planned |
 
 ## Prior Work

@@ -55,5 +55,6 @@ Quick recap checklist of concepts covered.
 ## Project Structure
 
 - `01_python_refresher/` — Reference notebooks + Kyle's retyped versions
+- `02_nlp_fundamentals/` — NLP reference notebooks + Kyle's retyped versions
 - `_reference/` — Archived original approach (markdown guides, `.py` files)
-- Other sections (NLP, RAG app) — TBD, will be addressed after validating the notebook format
+- Other sections (RAG app) — TBD, will be addressed after NLP
