@@ -2,59 +2,41 @@
 
 ## Project Intent
 
-This is a portfolio project for a Gen AI Engineer job application. Kyle is the sole author of all Python code in this repo.
+Portfolio project for a Gen AI Engineer job application — a Document Q&A Assistant demonstrating RAG architecture, prompt engineering, and Python API development.
 
 ## Environment
 
-- **Python 3.11** via **Miniconda** (not venv)
-- Conda environment name: `gen_ai`
-- Use `conda install` for packages with C dependencies (numpy, pandas, scipy, pytorch)
-- Use `pip install` for pure-Python packages
+- **Python 3.11** via **Miniconda** (conda env: `py-refresher`)
+- **Ollama** served locally on RTX 3090 (24GB VRAM)
+- **Docker Compose** for service orchestration
+- **Next.js** frontend (local dev + Vercel deployment)
 
-## Code Authorship Rules
+## Tech Stack
 
-- **Kyle writes all portfolio code himself.** His deliverable is his own retyped notebooks with his own comments.
-- **Claude CAN generate reference `.ipynb` notebooks** for the Python refresher section. These are learning materials (like exercise guides), not Kyle's work.
-- **Claude CANNOT generate Kyle's implementation code** for other sections (NLP, RAG app, etc.).
-- Code snippets in chat are fine — Kyle will type them out and make sure he understands them before moving on.
+- FastAPI (Python backend microservices)
+- Qdrant (vector database, Docker container)
+- Ollama (mistral 7B for chat, nomic-embed-text for embeddings)
+- LangChain (RAG orchestration)
+- Next.js + TypeScript (frontend)
+- Docker Compose (deployment)
 
-## What Claude SHOULD Do
+## Kyle's Background
 
-- **Generate reference Jupyter notebooks** when Kyle says he needs to learn or refresh something (see notebook format below).
-- **Generate infrastructure/config files** — .gitignore, Dockerfile, docker-compose.yml, requirements.txt, CLAUDE.md, README files.
-- **Review Kyle's code** when asked — point out issues, suggest improvements, explain errors.
-- **Answer questions** about concepts, libraries, or approaches.
-- **Help debug** when Kyle hits an error.
+- Strong in Go and TypeScript (full-stack web apps)
+- Experienced with Docker, Kubernetes, GitHub Actions, SQL/NoSQL
+- Has used Ollama and built web services to interact with it
+- Limited hands-on experience with Python data processing, LLM workflows, LangChain, RAG, prompt engineering
+- Has written Python for Django, taken tutorials, but limited production Python experience
 
-## Trigger for Learning Guides
+## Lesson Notebooks
 
-Only generate reference notebooks when Kyle **explicitly states** he needs to learn or refresh something. Don't proactively create learning materials for sections he hasn't asked about yet.
+The `lessons/` directory contains build-along Jupyter notebooks. Each lesson teaches a concept by building a piece of the portfolio app. Format per concept:
 
-## Reference Notebook Format
+1. **Go/TS comparison** — frame the concept using what Kyle already knows
+2. **Code cell — example** — complete, runnable code
+3. **Code cell — experiment** — variation or "try this" prompt
+4. **Markdown cell — "In your own words"** — reflection prompt
 
-Each notebook follows a consistent repeating pattern:
+## Design Spec
 
-### Top cell (markdown)
-Title, one-sentence goal, prereqs.
-
-### Per concept (repeating)
-1. **Markdown cell — Go/TS comparison:** "In Go you'd do X. In Python, here's what's different and why."
-2. **Code cell — example:** Complete, runnable code demonstrating the concept.
-3. **Code cell — experiment:** A variation or "try this" prompt.
-4. **Markdown cell — "In your own words":** Prompt for Kyle to write his own explanation.
-
-### Bottom cell (markdown)
-Quick recap checklist of concepts covered.
-
-## Kyle's Workflow
-
-1. Open the reference notebook (Claude-generated)
-2. Create his own notebook — retype code, run it, write own comments
-3. Commit his version
-
-## Project Structure
-
-- `01_python_refresher/` — Reference notebooks + Kyle's retyped versions
-- `02_nlp_fundamentals/` — NLP reference notebooks + Kyle's retyped versions
-- `_reference/` — Archived original approach (markdown guides, `.py` files)
-- Other sections (RAG app) — TBD, will be addressed after NLP
+See `docs/superpowers/specs/2026-03-31-document-qa-assistant-design.md` for the full architecture and design.
