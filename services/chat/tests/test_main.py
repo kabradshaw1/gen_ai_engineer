@@ -1,0 +1,48 @@
+import json
+import pytest
+from unittest.mock import patch, AsyncMock, MagicMock
+from fastapi.testclient import TestClient
+from app.main import app
+
+
+client = TestClient(app)
+
+
+def test_health():
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy" or data["status"] == "ok"
+
+
+@patch("app.main.rag_query")
+def test_chat_streams_response(mock_rag_query):
+    async def fake_rag_query(**kwargs):
+        yield {"token": "Hello"}
+        yield {"token": " world"}
+        yield {"done": True, "sources": [{"file": "test.pdf", "page": 1}]}
+
+    mock_rag_query.return_value = fake_rag_query()
+
+    response = client.post(
+        "/chat",
+        json={"question": "What is this?", "collection": "default"},
+    )
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers["content-type"]
+
+    events = []
+    for line in response.text.strip().split("\n"):
+        if line.startswith("data: "):
+            events.append(json.loads(line[6:]))
+
+    tokens = [e["token"] for e in events if "token" in e]
+    assert "Hello" in tokens
+    done_events = [e for e in events if e.get("done")]
+    assert len(done_events) == 1
+    assert done_events[0]["sources"][0]["file"] == "test.pdf"
+
+
+def test_chat_requires_question():
+    response = client.post("/chat", json={})
+    assert response.status_code == 422
