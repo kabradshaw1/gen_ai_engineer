@@ -1,4 +1,5 @@
 import io
+import httpx
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 from fastapi.testclient import TestClient
@@ -8,9 +9,44 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_health():
+@patch("app.main.httpx.AsyncClient")
+@patch("app.main.QdrantClient")
+def test_health(mock_qdrant_cls, mock_httpx_cls):
+    mock_qdrant = MagicMock()
+    mock_qdrant.get_collections.return_value = True
+    mock_qdrant_cls.return_value = mock_qdrant
+
+    mock_client = AsyncMock()
+    mock_client.get.return_value = AsyncMock(status_code=200)
+    mock_httpx_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+
     response = client.get("/health")
     assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["qdrant"] == "connected"
+    assert data["ollama"] == "connected"
+
+
+@patch("app.main.httpx.AsyncClient")
+@patch("app.main.QdrantClient")
+def test_health_qdrant_down(mock_qdrant_cls, mock_httpx_cls):
+    mock_qdrant = MagicMock()
+    mock_qdrant.get_collections.side_effect = Exception("Connection refused")
+    mock_qdrant_cls.return_value = mock_qdrant
+
+    mock_client = AsyncMock()
+    mock_client.get.return_value = AsyncMock(status_code=200)
+    mock_httpx_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_httpx_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+
+    response = client.get("/health")
+    assert response.status_code == 503
+    data = response.json()
+    assert data["status"] == "degraded"
+    assert data["qdrant"] == "disconnected"
+    assert data["ollama"] == "connected"
 
 
 @patch("app.main.get_store")
