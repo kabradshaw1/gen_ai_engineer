@@ -8,6 +8,7 @@
 
 - Rebuild the actual app code yourself, module by module
 - Understand *why* each design decision was made, not just *what* the code does
+- Learn what each package/library does and why it was chosen — build vocabulary to discuss these tools and design decisions with Claude agents and in interviews
 - Bridge Go/TS knowledge to Python patterns — brief comparisons, not language tutorials
 - Each notebook is self-contained and runnable independently
 - Produce working code that is functionally equivalent to `services/ingestion/` and `services/chat/` (same behavior, may differ in variable names or minor details)
@@ -22,10 +23,11 @@ Every notebook follows this format:
 
 1. **Intro** — What you're building, why it matters, how it fits in the app (2-3 paragraphs)
 2. **Prerequisites** — pip installs, connectivity checks for Ollama/Qdrant where needed
-3. **Go/TS Comparison** — Brief sidebar mapping the core concept to Go/TS equivalents (1-2 paragraphs, not a language tutorial)
-4. **Build It** — Multiple code cells, each building one piece. Markdown cells between explain the *why* behind each decision. This is the bulk of the notebook.
-5. **Experiment** — 2-3 "try this" cells where you tweak parameters and observe effects
-6. **Check Your Understanding** — 2-3 reflection prompts ("In your own words, why does chunk overlap matter?")
+3. **Package Introductions** — Before using a new package, explain what it is, what problem it solves, why it was chosen over alternatives, and the key APIs you'll use. For example: "PyPDF2 is a pure-Python PDF library. We're using it because it has no system dependencies (unlike pdfminer or poppler). The main API is `PdfReader` — you give it a file-like object and iterate `.pages`." This gives you the vocabulary to discuss these tools confidently.
+4. **Go/TS Comparison** — Brief sidebar mapping the core concept to Go/TS equivalents (1-2 paragraphs, not a language tutorial)
+5. **Build It** — Multiple code cells, each building one piece. Markdown cells between explain the *why* behind each decision. This is the bulk of the notebook.
+6. **Experiment** — 2-3 "try this" cells where you tweak parameters and observe effects
+7. **Check Your Understanding** — 2-3 reflection prompts ("In your own words, why does chunk overlap matter?")
 
 ## Claude Code Pitfall Callouts
 
