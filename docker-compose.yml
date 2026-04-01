@@ -74,7 +74,7 @@ services:
     restart: unless-stopped
 
   nvidia-gpu-exporter:
-    image: utkuozdemir/nvidia_gpu_exporter:1.2.1
+    image: utkuozdemir/nvidia_gpu_exporter:1.4.1
     ports:
       - "9835:9835"
     deploy:
