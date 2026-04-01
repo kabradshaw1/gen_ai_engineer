@@ -150,3 +150,13 @@ async def delete_document(document_id: str):
         "document_id": document_id,
         "chunks_deleted": chunks_deleted,
     }
+
+
+@app.delete("/collections/{collection_name}")
+async def delete_collection(collection_name: str):
+    store = get_store()
+    try:
+        store.delete_collection(collection_name)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return {"status": "deleted", "collection": collection_name}

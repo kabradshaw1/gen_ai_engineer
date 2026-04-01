@@ -143,6 +143,30 @@ def test_delete_document_not_found(mock_get_store):
     assert response.status_code == 404
 
 
+@patch("app.main.get_store")
+def test_delete_collection_success(mock_get_store):
+    mock_store = MagicMock()
+    mock_get_store.return_value = mock_store
+
+    response = client.delete("/collections/e2e-test")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "deleted"
+    assert data["collection"] == "e2e-test"
+
+
+@patch("app.main.get_store")
+def test_delete_collection_not_found(mock_get_store):
+    mock_store = MagicMock()
+    mock_store.delete_collection.side_effect = ValueError(
+        "Collection nonexistent not found"
+    )
+    mock_get_store.return_value = mock_store
+
+    response = client.delete("/collections/nonexistent")
+    assert response.status_code == 404
+
+
 def test_cors_rejects_unknown_origin():
     response = client.options(
         "/health",
