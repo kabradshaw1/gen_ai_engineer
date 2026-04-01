@@ -2,7 +2,7 @@ import uuid
 from io import BytesIO
 
 import httpx
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from qdrant_client import QdrantClient
 
@@ -73,7 +73,10 @@ async def health():
 
 
 @app.post("/ingest")
-async def ingest(file: UploadFile = File(...)):
+async def ingest(
+    file: UploadFile = File(...),
+    collection: str | None = Query(default=None),
+):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=422, detail="Only PDF files are accepted")
 
@@ -113,7 +116,14 @@ async def ingest(file: UploadFile = File(...)):
 
     document_id = str(uuid.uuid4())
     try:
-        store = get_store()
+        if collection:
+            store = QdrantStore(
+                host=settings.qdrant_host,
+                port=settings.qdrant_port,
+                collection_name=collection,
+            )
+        else:
+            store = get_store()
         store.upsert(
             chunks=chunks,
             vectors=vectors,

@@ -179,3 +179,24 @@ def test_cors_rejects_unknown_origin():
     assert "evil.example.com" not in response.headers.get(
         "access-control-allow-origin", ""
     )
+
+
+@patch("app.main.QdrantStore")
+@patch("app.main.embed_texts", new_callable=AsyncMock)
+@patch("app.main.extract_pages")
+def test_ingest_with_custom_collection(mock_extract, mock_embed, mock_qdrant_store_cls):
+    mock_extract.return_value = [
+        {"page_number": 1, "text": "Hello world. " * 100},
+    ]
+    mock_embed.return_value = [[0.1] * 768] * 2
+    mock_store = MagicMock()
+    mock_qdrant_store_cls.return_value = mock_store
+
+    pdf_content = b"%PDF-1.4 fake content"
+    response = client.post(
+        "/ingest?collection=e2e-test",
+        files={"file": ("test.pdf", io.BytesIO(pdf_content), "application/pdf")},
+    )
+
+    assert response.status_code == 200
+    mock_store.upsert.assert_called_once()
