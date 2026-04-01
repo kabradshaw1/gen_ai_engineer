@@ -92,3 +92,34 @@ def test_list_documents(mock_qdrant_client):
     assert docs[0]["chunks"] == 2
     assert docs[1]["document_id"] == "doc-2"
     assert docs[1]["chunks"] == 1
+
+
+def test_delete_document(mock_qdrant_client):
+    mock_qdrant_client.collection_exists.return_value = True
+    store = QdrantStore(host="localhost", port=6333, collection_name="test")
+
+    mock_qdrant_client.scroll.return_value = (
+        [
+            MagicMock(payload={"document_id": "doc-1", "filename": "a.pdf", "page_number": 1, "chunk_index": 0}),
+            MagicMock(payload={"document_id": "doc-1", "filename": "a.pdf", "page_number": 1, "chunk_index": 1}),
+            MagicMock(payload={"document_id": "doc-1", "filename": "a.pdf", "page_number": 2, "chunk_index": 2}),
+        ],
+        None,
+    )
+
+    count = store.delete_document("doc-1")
+    assert count == 3
+    mock_qdrant_client.delete.assert_called_once()
+    call_args = mock_qdrant_client.delete.call_args
+    assert call_args.kwargs["collection_name"] == "test"
+
+
+def test_delete_document_not_found(mock_qdrant_client):
+    mock_qdrant_client.collection_exists.return_value = True
+    store = QdrantStore(host="localhost", port=6333, collection_name="test")
+
+    mock_qdrant_client.scroll.return_value = ([], None)
+
+    count = store.delete_document("nonexistent")
+    assert count == 0
+    mock_qdrant_client.delete.assert_not_called()
