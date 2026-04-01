@@ -11,6 +11,7 @@ Portfolio project for a Gen AI Engineer job application — a Document Q&A Assis
 - Ollama (mistral 7B for chat, nomic-embed-text for embeddings)
 - LangChain text splitters (chunking only — not using the full LangChain framework)
 - Next.js + TypeScript + shadcn/ui (frontend)
+- Playwright (E2E testing)
 - Docker Compose (backend orchestration)
 
 ## Infrastructure
@@ -32,14 +33,17 @@ Portfolio project for a Gen AI Engineer job application — a Document Q&A Assis
 
 ```
 services/
-├── ingestion/          # FastAPI — PDF upload, parse, chunk, embed, store
+├── ingestion/          # FastAPI — PDF upload, parse, chunk, embed, store, delete
 │   ├── app/            # main.py, pdf_parser.py, chunker.py, embedder.py, store.py, config.py
-│   └── tests/          # 20 unit tests
+│   └── tests/          # unit tests
 ├── chat/               # FastAPI — question embed, search, RAG prompt, stream
 │   ├── app/            # main.py, retriever.py, prompt.py, chain.py, config.py
-│   └── tests/          # 12 unit tests
-frontend/               # Next.js + shadcn/ui — chat UI, PDF upload, SSE streaming
+│   └── tests/          # unit tests
+frontend/               # Next.js + shadcn/ui — chat UI, PDF upload, document management
+├── e2e/                # Playwright E2E tests (mocked + production smoke)
+├── src/components/     # ChatWindow, FileUpload, DocumentList, MessageInput, SourceBadge
 lessons/                # 7 Jupyter notebooks rebuilding the services from scratch
+.github/workflows/      # CI/CD pipeline with security scanning
 docker-compose.yml      # Qdrant + ingestion + chat services
 .env.example            # Config template
 ```
@@ -64,17 +68,41 @@ docker-compose.yml      # Qdrant + ingestion + chat services
 6. **Experiment** — tweak parameters, observe effects
 7. **Check Your Understanding** — reflection prompts
 
+## Branching & Workflow
+
+- `main` — production. Pushes trigger deploy + post-deploy smoke tests.
+- `staging` — integration branch. Pushes trigger mocked Playwright E2E tests.
+- `feat/*`, `fix/*` — feature branches merged into `staging` first.
+
+**Developer workflow:**
+1. Create feature branch from `staging`
+2. Push — CI runs lint, unit tests, security scans
+3. Merge into `staging` — CI runs mocked E2E tests
+4. If all pass, merge `staging` into `main`
+5. CI deploys to production, runs smoke tests against live URLs
+
+## CI/CD Pipeline
+
+All jobs run on every push. Security + E2E jobs gate deployment.
+
+**Quality:** ruff lint/format, pytest + coverage, tsc, Next.js build
+**Security:** Bandit (SAST), pip-audit, npm audit, gitleaks, Hadolint, CORS guardrail
+**E2E:** Playwright mocked tests (staging), production smoke tests (post-deploy)
+**Deploy:** SSH to Windows PC → `docker compose up -d --build`
+
 ## Design Specs
 
 - `docs/superpowers/specs/2026-03-31-document-qa-assistant-design.md` — full system architecture
 - `docs/superpowers/specs/2026-03-31-frontend-design.md` — frontend design
 - `docs/superpowers/specs/2026-03-31-lesson-notebooks-design.md` — lesson notebook design
+- `docs/superpowers/specs/2026-03-31-devsecops-design.md` — security hardening
+- `docs/superpowers/specs/2026-04-01-e2e-testing-and-staging-design.md` — E2E testing & staging workflow
 
 ## Current State
 
-- **Branch:** `feat/backend-services` — all work lives here, not yet merged to main
-- **Backend:** Complete — 32 tests passing, Docker Compose tested on Windows
-- **Frontend:** Complete — builds clean, tested against live backend via SSH tunnels
-- **Lessons:** Complete — 7 notebooks created
-- **Deployed:** Frontend on Vercel, backend via Cloudflare Tunnel (cloudflared Windows service)
-- **Remaining:** None — all features complete
+- **Backend:** Complete — unit tests passing, Docker Compose on Windows, CORS hardened via env var
+- **Frontend:** Complete — chat UI, PDF upload, document management with delete
+- **E2E Tests:** 9 mocked Playwright tests + production smoke suite
+- **Lessons:** Complete — 7 notebooks
+- **Deployed:** Frontend on Vercel, backend via Cloudflare Tunnel
+- **Security:** Automated scanning in CI (Bandit, pip-audit, npm audit, gitleaks, Hadolint)
