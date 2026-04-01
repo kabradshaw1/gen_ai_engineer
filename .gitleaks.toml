@@ -1,0 +1,8 @@
+title = "gitleaks config"
+
+[allowlist]
+paths = [
+    '''\.env\.example''',
+    '''lessons/.*\.ipynb''',
+    '''frontend/node_modules/.*''',
+]
