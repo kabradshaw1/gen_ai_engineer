@@ -29,7 +29,7 @@ test.describe("Chat flow", () => {
       });
     });
 
-    await page.goto("/");
+    await page.goto("/ai/rag");
 
     const input = page.getByPlaceholder(
       "Ask a question about your documents..."

@@ -40,7 +40,7 @@ test.describe("Document delete", () => {
       return route.continue();
     });
 
-    await page.goto("/");
+    await page.goto("/ai/rag");
 
     // DocumentList trigger text: "1 document uploaded"
     await expect(page.getByText("1 document uploaded")).toBeVisible();

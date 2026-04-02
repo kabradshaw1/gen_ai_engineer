@@ -16,7 +16,7 @@ test.describe("Error handling", () => {
       route.fulfill({ status: 500, body: "Internal Server Error" })
     );
 
-    await page.goto("/");
+    await page.goto("/ai/rag");
 
     const input = page.getByPlaceholder(
       "Ask a question about your documents..."
@@ -39,7 +39,7 @@ test.describe("Error handling", () => {
       })
     );
 
-    await page.goto("/");
+    await page.goto("/ai/rag");
 
     // Use setInputFiles with a buffer to avoid needing a real file on disk
     const fileInput = page.locator('input[type="file"]');

@@ -11,7 +11,7 @@ const INGESTION_API_URL =
 
 test.describe("Production smoke tests", () => {
   test("frontend loads", async ({ page }) => {
-    await page.goto(FRONTEND_URL);
+    await page.goto(`${FRONTEND_URL}/ai/rag`);
     await expect(
       page.locator("h1", { hasText: "Document Q&A Assistant" })
     ).toBeVisible();

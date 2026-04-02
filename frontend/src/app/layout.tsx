@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Document Q&A Assistant",
-  description: "AI-powered document question and answer assistant",
+  title: "Kyle Bradshaw",
+  description: "Portfolio and project showcase",
 };
 
 export default function RootLayout({

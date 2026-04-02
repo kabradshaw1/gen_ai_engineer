@@ -35,7 +35,7 @@ test.describe("Upload flow", () => {
       })
     );
 
-    await page.goto("/");
+    await page.goto("/ai/rag");
 
     // The file input is hidden — set files directly on it
     const fileInput = page.locator('input[type="file"]');
