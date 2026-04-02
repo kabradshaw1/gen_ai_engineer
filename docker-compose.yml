@@ -13,6 +13,7 @@ services:
       retries: 10
 
   ingestion:
+    image: ghcr.io/kabradshaw1/gen_ai_engineer/ingestion:latest
     build:
       context: ./services/ingestion
     ports:
@@ -25,6 +26,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   chat:
+    image: ghcr.io/kabradshaw1/gen_ai_engineer/chat:latest
     build:
       context: ./services/chat
     ports:
