@@ -3,7 +3,7 @@ import json
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from qdrant_client import QdrantClient
 from sse_starlette.sse import EventSourceResponse
 
@@ -21,8 +21,8 @@ app.add_middleware(
 
 
 class ChatRequest(BaseModel):
-    question: str
-    collection: str | None = None
+    question: str = Field(max_length=2000)
+    collection: str | None = Field(default=None, pattern=r"^[a-zA-Z0-9_-]{1,100}$")
 
 
 @app.get("/health")

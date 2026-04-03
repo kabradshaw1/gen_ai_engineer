@@ -80,6 +80,39 @@ def test_chat_requires_question():
     assert response.status_code == 422
 
 
+def test_chat_rejects_too_long_question():
+    response = client.post(
+        "/chat",
+        json={"question": "x" * 2001},
+    )
+    assert response.status_code == 422
+
+
+def test_chat_rejects_invalid_collection_name():
+    response = client.post(
+        "/chat",
+        json={"question": "What is this?", "collection": "DROP TABLE users"},
+    )
+    assert response.status_code == 422
+
+
+@patch("app.main.rag_query")
+def test_chat_accepts_valid_collection_name(mock_rag_query):
+    """Verify valid collection names pass Pydantic validation."""
+
+    async def fake_rag_query(**kwargs):
+        yield {"done": True, "sources": []}
+
+    mock_rag_query.return_value = fake_rag_query()
+
+    with TestClient(app, raise_server_exceptions=False) as c:
+        response = c.post(
+            "/chat",
+            json={"question": "Hello", "collection": "my-collection_123"},
+        )
+    assert response.status_code == 200
+
+
 @patch("app.main.rag_query")
 def test_chat_returns_error_when_backend_unreachable(mock_rag_query):
     async def failing_rag_query(**kwargs):
