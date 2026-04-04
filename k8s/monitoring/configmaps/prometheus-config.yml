@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: "prometheus"
+        static_configs:
+          - targets: ["localhost:9090"]
+
+      - job_name: "windows"
+        static_configs:
+          - targets: ["host.minikube.internal:9182"]
+
+      - job_name: "nvidia-gpu"
+        static_configs:
+          - targets: ["host.minikube.internal:9835"]
+
+      - job_name: "qdrant"
+        metrics_path: /healthz
+        static_configs:
+          - targets: ["qdrant.ai-services.svc.cluster.local:6333"]
+
+      - job_name: "ingestion"
+        metrics_path: /health
+        static_configs:
+          - targets: ["ingestion.ai-services.svc.cluster.local:8000"]
+
+      - job_name: "chat"
+        metrics_path: /health
+        static_configs:
+          - targets: ["chat.ai-services.svc.cluster.local:8000"]
+
+      - job_name: "debug"
+        metrics_path: /health
+        static_configs:
+          - targets: ["debug.ai-services.svc.cluster.local:8000"]
+
+      - job_name: "gateway-service"
+        metrics_path: /actuator/health
+        static_configs:
+          - targets: ["gateway-service.java-tasks.svc.cluster.local:8080"]
+
+      - job_name: "grafana"
+        metrics_path: /api/health
+        static_configs:
+          - targets: ["grafana.monitoring.svc.cluster.local:3000"]
