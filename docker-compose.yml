@@ -38,6 +38,19 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  debug:
+    image: ghcr.io/kabradshaw1/gen_ai_engineer/debug:latest
+    build:
+      context: ./services/debug
+    ports:
+      - "8003:8000"
+    env_file: .env
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   prometheus:
     image: prom/prometheus:latest
     ports:
