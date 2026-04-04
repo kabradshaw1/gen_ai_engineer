@@ -2,13 +2,13 @@
 
 ## Project Intent
 
-Portfolio project for a Gen AI Engineer job application — a Document Q&A Assistant demonstrating RAG architecture, prompt engineering, and Python API development.
+Portfolio project for a Gen AI Engineer job application — demonstrating RAG architecture, agentic AI, prompt engineering, and Python API development through two AI tools: a Document Q&A Assistant and a Debug Assistant.
 
 ## Tech Stack
 
 - FastAPI (Python backend microservices)
 - Qdrant (vector database, Docker container)
-- Ollama (mistral 7B for chat, nomic-embed-text for embeddings)
+- Ollama (Qwen 2.5 14B for chat/debug, nomic-embed-text for embeddings)
 - LangChain text splitters
 - Next.js + TypeScript + shadcn/ui (frontend)
 - Playwright (E2E testing)
@@ -19,14 +19,14 @@ Portfolio project for a Gen AI Engineer job application — a Document Q&A Assis
 - **Mac (dev machine):** Code editing, frontend dev server, no GPU
 - **Windows (PC@100.79.113.84 via Tailscale):** Ollama (RTX 3090), Docker Compose (Qdrant + backend services)
 - **SSH:** `ssh PC@100.79.113.84` — key-based auth configured
-- **Local dev:** SSH tunnels forward `localhost:8001` and `localhost:8002` to Windows backend
+- **Local dev:** SSH tunnel forwards `localhost:8000` to Windows nginx gateway
   ```bash
-  ssh -f -N -L 8001:localhost:8001 -L 8002:localhost:8002 PC@100.79.113.84
+  ssh -f -N -L 8000:localhost:8000 PC@100.79.113.84
   ```
-- **Frontend:** `npm run dev` in `frontend/`, points to `localhost:8001`/`8002` via tunnels
+- **Frontend:** `npm run dev` in `frontend/`, points to `localhost:8000` via tunnel
 - **Production:** Frontend on Vercel (`https://kylebradshaw.dev`), backend via Cloudflare Tunnel:
-  - `https://api-chat.kylebradshaw.dev` → Windows PC :8002
-  - `https://api-ingestion.kylebradshaw.dev` → Windows PC :8001
+  - `https://api.kylebradshaw.dev` → Windows PC :8000 (nginx gateway)
+  - nginx routes by path: `/ingestion/*`, `/chat/*`, `/debug/*` → respective services
   - Cloudflared installed as Windows service (auto-starts on boot)
 
 ## Project Structure
@@ -39,14 +39,19 @@ services/
 ├── chat/               # FastAPI — question embed, search, RAG prompt, stream
 │   ├── app/            # main.py, retriever.py, prompt.py, chain.py, config.py
 │   └── tests/          # unit tests
-frontend/               # Next.js + shadcn/ui — chat UI, PDF upload, document management
+├── debug/              # FastAPI — code indexing, agent loop, tool execution, debug streaming
+│   ├── app/            # main.py, agent.py, tools.py, indexer.py, prompts.py, config.py
+│   └── tests/          # unit tests
+nginx/                  # Reverse proxy — path-based routing to backend services
+├── nginx.conf          # /ingestion/*, /chat/*, /debug/* → respective services
+frontend/               # Next.js + shadcn/ui — chat UI, PDF upload, document management, debug
 ├── e2e/                # Playwright E2E tests (mocked + production smoke)
-├── src/components/     # ChatWindow, FileUpload, DocumentList, MessageInput, SourceBadge
+├── src/components/     # ChatWindow, FileUpload, DocumentList, DebugForm, AgentTimeline, etc.
 docs/adr/               # Architecture Decision Records (notebooks per service + markdown ADRs)
 ├── document-qa/        # 7 notebooks explaining the Document Q&A services step-by-step
 ├── template-adr.md     # Lightweight ADR template for smaller decisions
 .github/workflows/      # CI/CD pipeline with security scanning
-docker-compose.yml      # Qdrant + ingestion + chat services
+docker-compose.yml      # nginx gateway + Qdrant + ingestion + chat + debug services
 .env.example            # Config template
 ```
 
@@ -133,12 +138,14 @@ All jobs run on every push. Security + E2E jobs gate deployment.
 - `docs/superpowers/specs/2026-03-31-lesson-notebooks-design.md` — ADR notebook design
 - `docs/superpowers/specs/2026-03-31-devsecops-design.md` — security hardening
 - `docs/superpowers/specs/2026-04-01-e2e-testing-and-staging-design.md` — E2E testing & staging workflow
+- `docs/superpowers/specs/2026-04-03-debug-assistant-design.md` — debug assistant architecture
 
 ## Current State
 
-- **Backend:** Complete — unit tests passing, Docker Compose on Windows, CORS hardened via env var
-- **Frontend:** Complete — chat UI, PDF upload, document management with delete
+- **Backend:** Ingestion + chat + debug services, all with unit tests, Docker Compose on Windows
+- **Frontend:** Document Q&A chat UI + Debug Assistant with agent timeline
+- **Gateway:** nginx reverse proxy — single API domain with path-based routing
 - **E2E Tests:** 9 mocked Playwright tests + production smoke suite
-- **ADRs:** Complete — 7 notebooks in `docs/adr/document-qa/`
-- **Deployed:** Frontend on Vercel, backend via Cloudflare Tunnel
+- **ADRs:** 7 notebooks in `docs/adr/document-qa/`
+- **Deployed:** Frontend on Vercel, backend via Cloudflare Tunnel (`api.kylebradshaw.dev`)
 - **Security:** Automated scanning in CI (Bandit, pip-audit, npm audit, gitleaks, Hadolint)
