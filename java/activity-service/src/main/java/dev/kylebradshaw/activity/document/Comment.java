@@ -21,9 +21,23 @@ public class Comment {
         this.createdAt = Instant.now();
     }
 
-    public String getId() { return id; }
-    public String getTaskId() { return taskId; }
-    public String getAuthorId() { return authorId; }
-    public String getBody() { return body; }
-    public Instant getCreatedAt() { return createdAt; }
+    public String getId() {
+        return id;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public String getAuthorId() {
+        return authorId;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 }

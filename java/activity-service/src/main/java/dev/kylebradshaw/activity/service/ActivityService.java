@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 public class ActivityService {
     private final ActivityEventRepository activityRepo;
 
-    public ActivityService(ActivityEventRepository activityRepo) { this.activityRepo = activityRepo; }
+    public ActivityService(ActivityEventRepository activityRepo) {
+        this.activityRepo = activityRepo;
+    }
 
     public List<ActivityEvent> getActivityByTask(String taskId) {
         return activityRepo.findByTaskIdOrderByTimestampDesc(taskId);

@@ -47,14 +47,22 @@ public class TaskService {
     public Task updateTask(UUID taskId, UpdateTaskRequest request, UUID actorId) {
         Task task = taskRepo.findById(taskId).orElseThrow(() -> new IllegalArgumentException("Task not found"));
         boolean statusChanged = false;
-        if (request.title() != null) task.setTitle(request.title());
-        if (request.description() != null) task.setDescription(request.description());
+        if (request.title() != null) {
+            task.setTitle(request.title());
+        }
+        if (request.description() != null) {
+            task.setDescription(request.description());
+        }
         if (request.status() != null && request.status() != task.getStatus()) {
             task.setStatus(request.status());
             statusChanged = true;
         }
-        if (request.priority() != null) task.setPriority(request.priority());
-        if (request.dueDate() != null) task.setDueDate(request.dueDate());
+        if (request.priority() != null) {
+            task.setPriority(request.priority());
+        }
+        if (request.dueDate() != null) {
+            task.setDueDate(request.dueDate());
+        }
         task = taskRepo.save(task);
         if (statusChanged) {
             eventPublisher.publish("task.status_changed", TaskEventMessage.of(

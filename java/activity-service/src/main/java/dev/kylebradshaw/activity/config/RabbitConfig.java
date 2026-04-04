@@ -15,10 +15,14 @@ public class RabbitConfig {
     public static final String EXCHANGE_NAME = "task.events";
 
     @Bean
-    public TopicExchange taskExchange() { return new TopicExchange(EXCHANGE_NAME); }
+    public TopicExchange taskExchange() {
+        return new TopicExchange(EXCHANGE_NAME);
+    }
 
     @Bean
-    public Queue activityQueue() { return new Queue(QUEUE_NAME, true); }
+    public Queue activityQueue() {
+        return new Queue(QUEUE_NAME, true);
+    }
 
     @Bean
     public Binding binding(Queue activityQueue, TopicExchange taskExchange) {
@@ -26,5 +30,7 @@ public class RabbitConfig {
     }
 
     @Bean
-    public MessageConverter jsonMessageConverter() { return new Jackson2JsonMessageConverter(); }
+    public MessageConverter jsonMessageConverter() {
+        return new Jackson2JsonMessageConverter();
+    }
 }

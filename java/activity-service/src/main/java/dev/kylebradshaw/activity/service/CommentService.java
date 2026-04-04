@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 public class CommentService {
     private final CommentRepository commentRepo;
 
-    public CommentService(CommentRepository commentRepo) { this.commentRepo = commentRepo; }
+    public CommentService(CommentRepository commentRepo) {
+        this.commentRepo = commentRepo;
+    }
 
     public Comment addComment(String taskId, String authorId, String body) {
         return commentRepo.save(new Comment(taskId, authorId, body));

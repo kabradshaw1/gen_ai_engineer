@@ -37,9 +37,23 @@ public class RefreshToken {
         this.expiresAt = expiresAt;
     }
 
-    public UUID getId() { return id; }
-    public User getUser() { return user; }
-    public String getToken() { return token; }
-    public Instant getExpiresAt() { return expiresAt; }
-    public boolean isExpired() { return Instant.now().isAfter(expiresAt); }
+    public UUID getId() {
+        return id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public Instant getExpiresAt() {
+        return expiresAt;
+    }
+
+    public boolean isExpired() {
+        return Instant.now().isAfter(expiresAt);
+    }
 }

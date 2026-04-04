@@ -36,11 +36,31 @@ public class User {
         this.avatarUrl = avatarUrl;
     }
 
-    public UUID getId() { return id; }
-    public String getEmail() { return email; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getAvatarUrl() { return avatarUrl; }
-    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
-    public Instant getCreatedAt() { return createdAt; }
+    public UUID getId() {
+        return id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 }

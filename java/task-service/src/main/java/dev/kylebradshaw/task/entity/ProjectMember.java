@@ -46,16 +46,28 @@ public class ProjectMember {
         this.role = role;
     }
 
-    public UUID getProjectId() { return projectId; }
-    public UUID getUserId() { return userId; }
-    public ProjectRole getRole() { return role; }
-    public void setRole(ProjectRole role) { this.role = role; }
+    public UUID getProjectId() {
+        return projectId;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public ProjectRole getRole() {
+        return role;
+    }
+
+    public void setRole(ProjectRole role) {
+        this.role = role;
+    }
 
     public static class ProjectMemberId implements Serializable {
         private UUID projectId;
         private UUID userId;
 
         public ProjectMemberId() {}
+
         public ProjectMemberId(UUID projectId, UUID userId) {
             this.projectId = projectId;
             this.userId = userId;
@@ -63,12 +75,18 @@ public class ProjectMember {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof ProjectMemberId that)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof ProjectMemberId that)) {
+                return false;
+            }
             return Objects.equals(projectId, that.projectId) && Objects.equals(userId, that.userId);
         }
 
         @Override
-        public int hashCode() { return Objects.hash(projectId, userId); }
+        public int hashCode() {
+            return Objects.hash(projectId, userId);
+        }
     }
 }

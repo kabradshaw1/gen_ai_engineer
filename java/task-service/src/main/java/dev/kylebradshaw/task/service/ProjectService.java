@@ -50,8 +50,12 @@ public class ProjectService {
             throw new IllegalStateException("Only the owner can update the project");
         }
         Project project = getProject(projectId);
-        if (name != null) project.setName(name);
-        if (description != null) project.setDescription(description);
+        if (name != null) {
+            project.setName(name);
+        }
+        if (description != null) {
+            project.setDescription(description);
+        }
         return projectRepo.save(project);
     }
 

@@ -26,11 +26,31 @@ public class ActivityEvent {
         this.timestamp = Instant.now();
     }
 
-    public String getId() { return id; }
-    public String getProjectId() { return projectId; }
-    public String getTaskId() { return taskId; }
-    public String getActorId() { return actorId; }
-    public String getEventType() { return eventType; }
-    public Map<String, Object> getMetadata() { return metadata; }
-    public Instant getTimestamp() { return timestamp; }
+    public String getId() {
+        return id;
+    }
+
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public String getActorId() {
+        return actorId;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public Instant getTimestamp() {
+        return timestamp;
+    }
 }
