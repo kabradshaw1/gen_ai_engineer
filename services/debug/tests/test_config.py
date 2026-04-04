@@ -12,6 +12,7 @@ def test_default_settings():
     assert s.max_file_lines == 100
     assert s.max_grep_matches == 20
     assert s.test_timeout_seconds == 30
+    assert s.allowed_origins == "https://kylebradshaw.dev"
 
 
 def test_settings_from_env(monkeypatch):
