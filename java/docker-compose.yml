@@ -55,6 +55,64 @@ services:
       timeout: 3s
       retries: 5
 
+  task-service:
+    build: ./task-service
+    ports:
+      - "8081:8081"
+    environment:
+      POSTGRES_HOST: postgres
+      RABBITMQ_HOST: rabbitmq
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-at-least-32-characters-long}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  activity-service:
+    build: ./activity-service
+    ports:
+      - "8082:8082"
+    environment:
+      MONGODB_HOST: mongodb
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "8083:8083"
+    environment:
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  gateway-service:
+    build: ./gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-at-least-32-characters-long}
+      TASK_SERVICE_URL: http://task-service:8081
+      ACTIVITY_SERVICE_URL: http://activity-service:8082
+      NOTIFICATION_SERVICE_URL: http://notification-service:8083
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+    depends_on:
+      - task-service
+      - activity-service
+      - notification-service
+
 volumes:
   postgres_data:
   mongo_data:
