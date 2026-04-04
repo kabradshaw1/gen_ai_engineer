@@ -3,11 +3,8 @@ import path from "path";
 
 const FRONTEND_URL =
   process.env.SMOKE_FRONTEND_URL || "https://kylebradshaw.dev";
-const CHAT_API_URL =
-  process.env.SMOKE_CHAT_API_URL || "https://api-chat.kylebradshaw.dev";
-const INGESTION_API_URL =
-  process.env.SMOKE_INGESTION_API_URL ||
-  "https://api-ingestion.kylebradshaw.dev";
+const API_URL =
+  process.env.SMOKE_API_URL || "https://api.kylebradshaw.dev";
 
 test.describe("Production smoke tests", () => {
   test("frontend loads", async ({ page }) => {
@@ -21,12 +18,12 @@ test.describe("Production smoke tests", () => {
   });
 
   test("backend health checks pass", async ({ request }) => {
-    const chatHealth = await request.get(`${CHAT_API_URL}/health`);
+    const chatHealth = await request.get(`${API_URL}/chat/health`);
     expect(chatHealth.ok()).toBeTruthy();
     const chatData = await chatHealth.json();
     expect(chatData.status).toBe("healthy");
 
-    const ingestionHealth = await request.get(`${INGESTION_API_URL}/health`);
+    const ingestionHealth = await request.get(`${API_URL}/ingestion/health`);
     expect(ingestionHealth.ok()).toBeTruthy();
     const ingestionData = await ingestionHealth.json();
     expect(ingestionData.status).toBe("healthy");
@@ -41,7 +38,7 @@ test.describe("Production smoke tests", () => {
     const pdfBuffer = fs.readFileSync(pdfPath);
 
     const uploadResponse = await request.post(
-      `${INGESTION_API_URL}/ingest?collection=${testCollection}`,
+      `${API_URL}/ingestion/ingest?collection=${testCollection}`,
       {
         multipart: {
           file: {
@@ -58,7 +55,7 @@ test.describe("Production smoke tests", () => {
     expect(uploadData.chunks_created).toBeGreaterThan(0);
 
     // Step 2: Ask a question against the test collection
-    const chatResponse = await request.post(`${CHAT_API_URL}/chat`, {
+    const chatResponse = await request.post(`${API_URL}/chat/chat`, {
       data: {
         question: "What is artificial intelligence?",
         collection: testCollection,
@@ -70,7 +67,7 @@ test.describe("Production smoke tests", () => {
 
     // Step 3: Cleanup — delete the test collection
     const deleteResponse = await request.delete(
-      `${INGESTION_API_URL}/collections/${testCollection}`
+      `${API_URL}/ingestion/collections/${testCollection}`
     );
     expect(deleteResponse.ok()).toBeTruthy();
     const deleteData = await deleteResponse.json();

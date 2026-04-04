@@ -334,6 +334,5 @@ jobs:
       - name: Run smoke tests
         env:
           SMOKE_FRONTEND_URL: https://kylebradshaw.dev
-          SMOKE_CHAT_API_URL: https://api-chat.kylebradshaw.dev
-          SMOKE_INGESTION_API_URL: https://api-ingestion.kylebradshaw.dev
+          SMOKE_API_URL: https://api.kylebradshaw.dev
         run: npx playwright test e2e/smoke.spec.ts --config=playwright.smoke.config.ts
