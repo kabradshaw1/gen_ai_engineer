@@ -1,0 +1,15 @@
+# Gradle
+.gradle/
+**/build/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Environment
+.env
+
+# K8s secrets (use .template files only)
+k8s/secrets/*.yml
+!k8s/secrets/*.yml.template

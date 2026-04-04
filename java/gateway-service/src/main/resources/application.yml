@@ -4,7 +4,7 @@ server:
 spring:
   graphql:
     graphiql:
-      enabled: true
+      enabled: ${GRAPHIQL_ENABLED:false}
     schema:
       locations: classpath:graphql/
 
@@ -16,3 +16,12 @@ app:
     activity-url: ${ACTIVITY_SERVICE_URL:http://localhost:8082}
     notification-url: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
