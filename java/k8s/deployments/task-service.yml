@@ -13,6 +13,8 @@ spec:
       labels:
         app: task-service
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: task-service
           image: ghcr.io/kabradshaw1/gen_ai_engineer/java-task-service:latest

@@ -13,6 +13,8 @@ spec:
       labels:
         app: debug
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: debug
           image: ghcr.io/kabradshaw1/gen_ai_engineer/debug:latest

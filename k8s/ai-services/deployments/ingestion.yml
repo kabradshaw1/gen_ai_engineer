@@ -13,6 +13,8 @@ spec:
       labels:
         app: ingestion
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: ingestion
           image: ghcr.io/kabradshaw1/gen_ai_engineer/ingestion:latest

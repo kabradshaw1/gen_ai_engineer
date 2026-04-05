@@ -13,6 +13,8 @@ spec:
       labels:
         app: chat
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: chat
           image: ghcr.io/kabradshaw1/gen_ai_engineer/chat:latest

@@ -13,6 +13,8 @@ spec:
       labels:
         app: activity-service
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: activity-service
           image: ghcr.io/kabradshaw1/gen_ai_engineer/java-activity-service:latest

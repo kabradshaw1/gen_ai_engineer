@@ -13,6 +13,8 @@ spec:
       labels:
         app: gateway-service
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: gateway-service
           image: ghcr.io/kabradshaw1/gen_ai_engineer/java-gateway-service:latest
