@@ -1,4 +1,6 @@
 package dev.kylebradshaw.task.dto;
 
-public record WeeklyThroughputRow(String week, int completed, int created) {
+import java.io.Serializable;
+
+public record WeeklyThroughputRow(String week, int completed, int created) implements Serializable {
 }
