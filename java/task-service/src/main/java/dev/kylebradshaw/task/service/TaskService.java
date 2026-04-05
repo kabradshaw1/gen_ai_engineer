@@ -4,10 +4,12 @@ import dev.kylebradshaw.task.dto.CreateTaskRequest;
 import dev.kylebradshaw.task.dto.TaskEventMessage;
 import dev.kylebradshaw.task.dto.UpdateTaskRequest;
 import dev.kylebradshaw.task.entity.Task;
+import dev.kylebradshaw.task.entity.TaskStatus;
 import dev.kylebradshaw.task.entity.User;
 import dev.kylebradshaw.task.repository.ProjectRepository;
 import dev.kylebradshaw.task.repository.TaskRepository;
 import dev.kylebradshaw.task.repository.UserRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +57,11 @@ public class TaskService {
         }
         if (request.status() != null && request.status() != task.getStatus()) {
             task.setStatus(request.status());
+            if (request.status() == TaskStatus.DONE) {
+                task.setCompletedAt(Instant.now());
+            } else {
+                task.setCompletedAt(null);
+            }
             statusChanged = true;
         }
         if (request.priority() != null) {
