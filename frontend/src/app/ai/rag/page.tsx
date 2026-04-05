@@ -20,7 +20,7 @@ export default function RagDemo() {
       const res = await fetch(`${ingestionBaseUrl}/documents`);
       if (res.ok) {
         const data = await res.json();
-        setDocuments(data.documents);
+        setDocuments(data.documents ?? []);
       }
     } catch {
       // Silently fail — documents list is non-critical
