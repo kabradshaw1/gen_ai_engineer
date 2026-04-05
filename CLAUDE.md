@@ -92,9 +92,9 @@ Current notebooks: `docs/adr/document-qa/` (7 notebooks covering the ingestion a
 - `staging` — integration branch. Pushes trigger mocked Playwright E2E tests.
 - **Kyle handles all git push and merge operations.** Claude should commit locally but never push to remote.
 
-**Developer workflow (using git worktrees):**
+**All code changes must use git worktrees.** Never commit directly to `main` or `staging`. This applies to both agent work and main-conversation work.
 
-Claude agents use `isolation: "worktree"` to work in isolated copies of the repo. This avoids branch switching on the main working tree and lets multiple agents work in parallel without conflicts.
+Claude uses `isolation: "worktree"` to work in isolated copies of the repo. This avoids branch switching on the main working tree and lets multiple agents work in parallel without conflicts.
 
 1. Agent spawned with `isolation: "worktree"` — gets a temporary worktree with its own branch
 2. Agent makes changes and commits in the worktree
@@ -102,6 +102,8 @@ Claude agents use `isolation: "worktree"` to work in isolated copies of the repo
 4. CI runs lint, unit tests, security scans, E2E tests on `staging`
 5. If all pass, Kyle merges `staging` into `main`
 6. CI deploys to production, runs smoke tests against live URLs
+
+**For main-conversation work (no subagent):** Use the `EnterWorktree` tool to create an isolated worktree before making changes. Commit there, then use `ExitWorktree` when done.
 
 **Exception:** Hotfixes for CI/production breakage can go straight to `main`.
 

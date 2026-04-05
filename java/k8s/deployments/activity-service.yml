@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: activity-service
-          image: ghcr.io/kabradshaw1/gen_ai_engineer/java-activity-service:latest
+          image: ghcr.io/kabradshaw1/portfolio/java-activity-service:latest
           ports:
             - containerPort: 8082
           envFrom:

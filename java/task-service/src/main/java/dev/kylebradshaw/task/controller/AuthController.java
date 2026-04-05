@@ -2,10 +2,15 @@ package dev.kylebradshaw.task.controller;
 
 import dev.kylebradshaw.task.dto.AuthRequest;
 import dev.kylebradshaw.task.dto.AuthResponse;
+import dev.kylebradshaw.task.dto.ForgotPasswordRequest;
+import dev.kylebradshaw.task.dto.LoginRequest;
+import dev.kylebradshaw.task.dto.RegisterRequest;
+import dev.kylebradshaw.task.dto.ResetPasswordRequest;
 import dev.kylebradshaw.task.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +22,7 @@ import org.springframework.web.client.RestClient;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthController {
 
     private final AuthService authService;
@@ -42,7 +47,7 @@ public class AuthController {
 
     /**
      * Exchange Google authorization code for user info and issue tokens.
-     * POST /api/auth/google
+     * POST /auth/google
      */
     @PostMapping("/google")
     public AuthResponse googleLogin(@Valid @RequestBody AuthRequest request) {
@@ -81,11 +86,33 @@ public class AuthController {
 
     /**
      * Refresh access token using a valid refresh token.
-     * POST /api/auth/refresh
+     * POST /auth/refresh
      */
     @PostMapping("/refresh")
     public AuthResponse refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
         return authService.refreshAccessToken(refreshToken);
+    }
+
+    @PostMapping("/register")
+    public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
+        return authService.register(request.email(), request.password(), request.name());
+    }
+
+    @PostMapping("/login")
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request.email(), request.password());
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.email());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.password());
+        return ResponseEntity.noContent().build();
     }
 }

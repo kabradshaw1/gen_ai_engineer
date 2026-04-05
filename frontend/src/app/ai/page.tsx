@@ -42,23 +42,16 @@ export default function AISection() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-6 py-12">
-        {/* Navigation */}
-        <Link
-          href="/"
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          &larr; Home
-        </Link>
-
         {/* Header */}
         <h1 className="mt-8 text-3xl font-bold">AI / Gen AI Engineer</h1>
 
         {/* Bio */}
         <section className="mt-8">
           <p className="text-muted-foreground leading-relaxed">
-            [Placeholder: AI-focused bio. Describe your interest in generative
-            AI, RAG architectures, and building intelligent systems. Highlight
-            relevant experience and what excites you about the field.]
+            Building intelligent systems with retrieval-augmented generation and
+            agentic architectures. This section demonstrates RAG pipelines,
+            vector search, LLM orchestration, and tool-using agents — built with
+            FastAPI, Qdrant, and Ollama, deployed on Kubernetes.
           </p>
         </section>
 
@@ -79,7 +72,7 @@ export default function AISection() {
             <li>Qdrant vector database</li>
             <li>Ollama with Mistral 7B (chat) and nomic-embed-text (embeddings)</li>
             <li>Next.js + TypeScript + shadcn/ui frontend</li>
-            <li>Docker Compose orchestration</li>
+            <li>Minikube Kubernetes deployment (production), Docker Compose (local dev)</li>
             <li>CI/CD with GitHub Actions, security scanning, E2E tests</li>
           </ul>
         </section>
@@ -119,6 +112,7 @@ export default function AISection() {
             <li>Ollama with Qwen 2.5 14B (agent reasoning) and nomic-embed-text (embeddings)</li>
             <li>LangChain Python-aware text splitter</li>
             <li>SSE streaming for real-time agent event output</li>
+            <li>Minikube Kubernetes deployment (production)</li>
           </ul>
 
           <h3 className="mt-6 text-lg font-medium">What It Demonstrates</h3>

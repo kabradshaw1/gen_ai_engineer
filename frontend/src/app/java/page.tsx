@@ -3,20 +3,14 @@ import Link from "next/link";
 export default function JavaPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <Link
-        href="/"
-        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        &larr; Home
-      </Link>
-
       <h1 className="mt-8 text-3xl font-bold">Full Stack Java Developer</h1>
 
       <section className="mt-8">
         <p className="text-muted-foreground leading-relaxed">
-          [Placeholder: Java-focused bio. Describe your experience with Spring
-          Boot, microservices, and cloud-native development. Highlight relevant
-          projects and what excites you about backend engineering at scale.]
+          Full-stack microservices architecture with Spring Boot, GraphQL, and
+          event-driven communication. This section demonstrates a task
+          management platform built with four Java services, PostgreSQL,
+          MongoDB, Redis, and RabbitMQ — deployed on Kubernetes.
         </p>
       </section>
 
@@ -37,7 +31,7 @@ export default function JavaPage() {
           <li>RabbitMQ event-driven architecture</li>
           <li>Google OAuth 2.0 login</li>
           <li>Next.js + TypeScript + Apollo Client frontend</li>
-          <li>Docker Compose + Minikube Kubernetes manifests</li>
+          <li>Minikube Kubernetes deployment (production), Docker Compose (local dev)</li>
           <li>CI/CD with GitHub Actions, Testcontainers, security scanning</li>
         </ul>
       </section>

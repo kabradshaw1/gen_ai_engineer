@@ -81,7 +81,7 @@ class TaskServiceIntegrationTest {
     @Test
     void createAndGetProject() throws Exception {
         var request = new CreateProjectRequest("Integration Project", "Testing");
-        mockMvc.perform(post("/api/projects")
+        mockMvc.perform(post("/projects")
                         .header("Authorization", "Bearer " + accessToken)
                         .header("X-User-Id", testUser.getId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -89,7 +89,7 @@ class TaskServiceIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Integration Project"));
 
-        mockMvc.perform(get("/api/projects")
+        mockMvc.perform(get("/projects")
                         .header("Authorization", "Bearer " + accessToken)
                         .header("X-User-Id", testUser.getId().toString()))
                 .andExpect(status().isOk())
@@ -99,7 +99,7 @@ class TaskServiceIntegrationTest {
     @Test
     void createTask_viaProject() throws Exception {
         var projectReq = new CreateProjectRequest("Task Test Project", "For tasks");
-        String projectJson = mockMvc.perform(post("/api/projects")
+        String projectJson = mockMvc.perform(post("/projects")
                         .header("Authorization", "Bearer " + accessToken)
                         .header("X-User-Id", testUser.getId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -109,7 +109,7 @@ class TaskServiceIntegrationTest {
 
         String projectId = objectMapper.readTree(projectJson).get("id").asText();
 
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post("/tasks")
                         .header("Authorization", "Bearer " + accessToken)
                         .header("X-User-Id", testUser.getId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
