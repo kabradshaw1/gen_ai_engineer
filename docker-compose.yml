@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
 
   ingestion:
-    image: ghcr.io/kabradshaw1/gen_ai_engineer/ingestion:latest
+    image: ghcr.io/kabradshaw1/portfolio/ingestion:latest
     build:
       context: ./services/ingestion
     env_file: .env
@@ -36,7 +36,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   chat:
-    image: ghcr.io/kabradshaw1/gen_ai_engineer/chat:latest
+    image: ghcr.io/kabradshaw1/portfolio/chat:latest
     build:
       context: ./services/chat
     env_file: .env
@@ -47,7 +47,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   debug:
-    image: ghcr.io/kabradshaw1/gen_ai_engineer/debug:latest
+    image: ghcr.io/kabradshaw1/portfolio/debug:latest
     build:
       context: ./services/debug
     env_file: .env

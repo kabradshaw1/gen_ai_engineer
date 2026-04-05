@@ -48,7 +48,7 @@ kubectl wait --namespace ingress-nginx `
 
 Write-Host ""
 Write-Host "==> Step 5: Deploy all services" -ForegroundColor Cyan
-$repoPath = Read-Host "Enter the repo path on this machine (e.g., C:\Users\PC\repos\gen_ai_engineer)"
+$repoPath = Read-Host "Enter the repo path on this machine (e.g., C:\Users\PC\repos\portfolio)"
 if (-not (Test-Path "$repoPath\k8s\deploy.sh")) {
     Write-Host "ERROR: k8s/deploy.sh not found at $repoPath" -ForegroundColor Red
     Write-Host "Make sure you've pulled the latest code: git pull origin feat/debug-assistant"

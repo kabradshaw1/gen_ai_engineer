@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: task-service
-          image: ghcr.io/kabradshaw1/gen_ai_engineer/java-task-service:latest
+          image: ghcr.io/kabradshaw1/portfolio/java-task-service:latest
           ports:
             - containerPort: 8081
           envFrom:

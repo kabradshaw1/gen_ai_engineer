@@ -17,7 +17,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: notification-service
-          image: ghcr.io/kabradshaw1/gen_ai_engineer/java-notification-service:latest
+          image: ghcr.io/kabradshaw1/portfolio/java-notification-service:latest
           ports:
             - containerPort: 8083
           envFrom:
