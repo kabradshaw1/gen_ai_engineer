@@ -13,6 +13,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,10 @@ public class TaskService {
         this.eventPublisher = eventPublisher;
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "project-stats", allEntries = true),
+            @CacheEvict(value = "project-velocity", allEntries = true)
+    })
     @Transactional
     public Task createTask(CreateTaskRequest request, UUID actorId) {
         var project = projectRepo.findById(request.projectId())
@@ -45,6 +51,10 @@ public class TaskService {
         return task;
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "project-stats", allEntries = true),
+            @CacheEvict(value = "project-velocity", allEntries = true)
+    })
     @Transactional
     public Task updateTask(UUID taskId, UpdateTaskRequest request, UUID actorId) {
         Task task = taskRepo.findById(taskId).orElseThrow(() -> new IllegalArgumentException("Task not found"));
@@ -99,6 +109,10 @@ public class TaskService {
         return taskRepo.findByProjectId(projectId);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "project-stats", allEntries = true),
+            @CacheEvict(value = "project-velocity", allEntries = true)
+    })
     @Transactional
     public void deleteTask(UUID taskId, UUID actorId) {
         Task task = taskRepo.findById(taskId).orElseThrow(() -> new IllegalArgumentException("Task not found"));
