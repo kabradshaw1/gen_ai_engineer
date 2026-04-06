@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: taskuser
+      POSTGRES_PASSWORD: taskpass
+      POSTGRES_DB: ecommercedb
+    volumes:
+      - go-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d ecommercedb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8091:8091"
+    environment:
+      DATABASE_URL: postgres://taskuser:taskpass@postgres:5432/ecommercedb
+      JWT_SECRET: dev-secret-key-at-least-32-characters-long
+      ALLOWED_ORIGINS: http://localhost:3000
+      PORT: "8091"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ecommerce-service:
+    build: ./ecommerce-service
+    ports:
+      - "8092:8092"
+    environment:
+      DATABASE_URL: postgres://taskuser:taskpass@postgres:5432/ecommercedb
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      JWT_SECRET: dev-secret-key-at-least-32-characters-long
+      ALLOWED_ORIGINS: http://localhost:3000
+      PORT: "8092"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  go-pgdata:
