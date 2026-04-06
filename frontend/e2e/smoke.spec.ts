@@ -74,3 +74,143 @@ test.describe("Production smoke tests", () => {
     expect(deleteData.status).toBe("deleted");
   });
 });
+
+const GRAPHQL_URL =
+  process.env.SMOKE_GRAPHQL_URL || "https://api.kylebradshaw.dev/graphql";
+
+test.describe("Java task management smoke tests", () => {
+  // Shared state for cleanup
+  let accessToken: string;
+  let projectId: string;
+  let taskId: string;
+  const testEmail = `smoke-${Date.now()}@test.com`;
+  const testPassword = "SmokeTest123!";
+
+  test("java tasks page loads", async ({ page }) => {
+    await page.goto(`${FRONTEND_URL}/java/tasks`);
+    await expect(
+      page.locator("h1", { hasText: "Task Manager" })
+    ).toBeVisible();
+    await expect(page.getByPlaceholder("Email")).toBeVisible();
+    await expect(page.getByPlaceholder("Password")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Sign in" })
+    ).toBeVisible();
+  });
+
+  test("register, create project and task", async ({ page, request }) => {
+    // Step 1: Navigate to login page and click "Create account"
+    await page.goto(`${FRONTEND_URL}/java/tasks`);
+    await page.getByRole("button", { name: "Create account" }).click();
+
+    // Step 2: Fill registration form
+    await expect(
+      page.locator("h1", { hasText: "Create Account" })
+    ).toBeVisible();
+    await page.getByPlaceholder("Name").fill("Smoke Test");
+    await page.getByPlaceholder("Email").fill(testEmail);
+    await page.getByPlaceholder("Password (min 8 characters)").fill(testPassword);
+    await page.getByPlaceholder("Confirm password").fill(testPassword);
+    await page.getByRole("button", { name: "Create account" }).click();
+
+    // Step 3: Verify login succeeded — project list appears
+    await expect(page.locator("h2", { hasText: "My Projects" })).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Step 4: Create a project
+    await page.getByRole("button", { name: "New Project" }).click();
+    await expect(
+      page.locator("h3", { hasText: "New Project" })
+    ).toBeVisible();
+    await page.getByPlaceholder("My Project").fill("Smoke Test Project");
+    await page.getByPlaceholder("Optional description").first().fill("Automated smoke test");
+    await page.getByRole("button", { name: "Create" }).click();
+
+    // Step 5: Verify project appears and click into it
+    await expect(page.getByText("Smoke Test Project")).toBeVisible({
+      timeout: 5000,
+    });
+    await page.getByText("Smoke Test Project").click();
+
+    // Step 6: Verify project page loaded
+    await expect(
+      page.locator("h1", { hasText: "Smoke Test Project" })
+    ).toBeVisible({ timeout: 5000 });
+
+    // Step 7: Create a task
+    await page.getByRole("button", { name: "New Task" }).click();
+    await expect(
+      page.locator("h3", { hasText: "New Task" })
+    ).toBeVisible();
+    await page.getByPlaceholder("Task title").fill("Smoke Test Task");
+    await page.locator("select").selectOption("HIGH");
+    await page.getByRole("button", { name: "Create" }).click();
+
+    // Step 8: Verify task appears on the board
+    await expect(page.getByText("Smoke Test Task")).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Step 9: Get access token and IDs for cleanup
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: { email: testEmail, password: testPassword },
+    });
+    expect(loginResponse.ok()).toBeTruthy();
+    const loginData = await loginResponse.json();
+    accessToken = loginData.accessToken;
+
+    // Get project ID from the URL
+    const url = page.url();
+    const urlParts = url.split("/");
+    projectId = urlParts[urlParts.indexOf("tasks") + 1];
+
+    // Get task ID by querying the page
+    const taskLink = page.getByText("Smoke Test Task");
+    const taskHref = await taskLink.evaluate((el) => {
+      const link = el.closest("a");
+      return link ? link.getAttribute("href") : null;
+    });
+    if (taskHref) {
+      const taskParts = taskHref.split("/");
+      taskId = taskParts[taskParts.length - 1];
+    }
+  });
+
+  test.afterAll(async ({ request }) => {
+    if (!accessToken) return;
+
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    };
+
+    // Delete task
+    if (taskId) {
+      await request.post(GRAPHQL_URL, {
+        headers,
+        data: {
+          query: `mutation { deleteTask(id: "${taskId}") }`,
+        },
+      });
+    }
+
+    // Delete project
+    if (projectId) {
+      await request.post(GRAPHQL_URL, {
+        headers,
+        data: {
+          query: `mutation { deleteProject(id: "${projectId}") }`,
+        },
+      });
+    }
+
+    // Delete user account
+    await request.post(GRAPHQL_URL, {
+      headers,
+      data: {
+        query: `mutation { deleteAccount }`,
+      },
+    });
+  });
+});
