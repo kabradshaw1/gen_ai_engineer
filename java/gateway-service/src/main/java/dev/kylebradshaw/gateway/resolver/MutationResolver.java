@@ -91,4 +91,11 @@ public class MutationResolver {
         notificationClient.markAllRead(userId);
         return true;
     }
+
+    @MutationMapping
+    public Boolean deleteAccount(DataFetchingEnvironment env) {
+        String userId = env.getGraphQlContext().get("userId");
+        taskClient.deleteUser(userId);
+        return true;
+    }
 }

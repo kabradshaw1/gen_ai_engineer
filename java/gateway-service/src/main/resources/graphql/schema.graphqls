@@ -22,6 +22,7 @@ type Mutation {
     addComment(taskId: ID!, body: String!): Comment!
     markNotificationRead(id: ID!): Boolean!
     markAllNotificationsRead: Boolean!
+    deleteAccount: Boolean!
 }
 
 type User { id: ID!, email: String!, name: String!, avatarUrl: String }

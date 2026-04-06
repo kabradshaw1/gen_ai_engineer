@@ -123,4 +123,12 @@ public class TaskServiceClient {
                 .retrieve()
                 .body(VelocityDto.class);
     }
+
+    public void deleteUser(String userId) {
+        client.delete()
+                .uri("/auth/user")
+                .header("X-User-Id", userId)
+                .retrieve()
+                .toBodilessEntity();
+    }
 }
