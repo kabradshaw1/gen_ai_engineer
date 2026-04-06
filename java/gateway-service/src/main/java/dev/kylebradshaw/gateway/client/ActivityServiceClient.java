@@ -29,7 +29,7 @@ public class ActivityServiceClient {
 
     public List<CommentDto> getCommentsByTask(String taskId) {
         return client.get()
-                .uri("/comments/task/{taskId}", taskId)
+                .uri("/comments/{taskId}", taskId)
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
     }
@@ -43,7 +43,7 @@ public class ActivityServiceClient {
 
     public CommentDto addComment(String taskId, String userId, String body) {
         return client.post()
-                .uri("/comments/task/{taskId}", taskId)
+                .uri("/comments/{taskId}", taskId)
                 .header("X-User-Id", userId)
                 .body(Map.of("body", body))
                 .retrieve()
