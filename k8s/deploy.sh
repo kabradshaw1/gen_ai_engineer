@@ -15,6 +15,7 @@ echo "==> Creating namespaces..."
 kubectl apply -f "$SCRIPT_DIR/ai-services/namespace.yml"
 kubectl apply -f "$REPO_DIR/java/k8s/namespace.yml"
 kubectl apply -f "$SCRIPT_DIR/monitoring/namespace.yml"
+kubectl apply -f "$REPO_DIR/go/k8s/namespace.yml"
 
 echo "==> Applying secrets..."
 if [ -f "$REPO_DIR/java/k8s/secrets/java-secrets.yml" ]; then
@@ -23,10 +24,18 @@ else
   echo "    WARN: java-secrets.yml not found — copy java-secrets.yml.template and fill in values"
 fi
 
+echo "==> Applying secrets..."
+if [ -f "$REPO_DIR/go/k8s/secrets/go-secrets.yml" ]; then
+  kubectl apply -f "$REPO_DIR/go/k8s/secrets/go-secrets.yml"
+else
+  echo "    WARN: go-secrets.yml not found — create go/k8s/secrets/go-secrets.yml with jwt-secret"
+fi
+
 echo "==> Applying ConfigMaps..."
 kubectl apply -f "$SCRIPT_DIR/ai-services/configmaps/"
 kubectl apply -f "$REPO_DIR/java/k8s/configmaps/"
 kubectl apply -f "$SCRIPT_DIR/monitoring/configmaps/"
+kubectl apply -f "$REPO_DIR/go/k8s/configmaps/"
 
 echo "==> Deploying ai-services (Qdrant + Ollama)..."
 kubectl apply -f "$SCRIPT_DIR/ai-services/services/ollama.yml"
@@ -70,6 +79,12 @@ kubectl apply -f "$REPO_DIR/java/k8s/services/activity-service.yml"
 kubectl apply -f "$REPO_DIR/java/k8s/services/notification-service.yml"
 kubectl apply -f "$REPO_DIR/java/k8s/services/gateway-service.yml"
 
+echo "==> Deploying go-ecommerce services..."
+kubectl apply -f "$REPO_DIR/go/k8s/deployments/auth-service.yml"
+kubectl apply -f "$REPO_DIR/go/k8s/deployments/ecommerce-service.yml"
+kubectl apply -f "$REPO_DIR/go/k8s/services/auth-service.yml"
+kubectl apply -f "$REPO_DIR/go/k8s/services/ecommerce-service.yml"
+
 echo "==> Deploying monitoring..."
 kubectl apply -f "$SCRIPT_DIR/monitoring/deployments/prometheus.yml"
 kubectl apply -f "$SCRIPT_DIR/monitoring/services/prometheus.yml"
@@ -81,6 +96,7 @@ kubectl apply -f "$SCRIPT_DIR/ai-services/ingress.yml"
 kubectl apply -f "$REPO_DIR/java/k8s/ingress.yml"
 kubectl apply -f "$REPO_DIR/java/k8s/ingress-rabbitmq.yml"
 kubectl apply -f "$SCRIPT_DIR/monitoring/ingress.yml"
+kubectl apply -f "$REPO_DIR/go/k8s/ingress.yml"
 
 echo "==> Waiting for all application services..."
 kubectl wait --for=condition=available --timeout=180s deployment/ingestion -n ai-services
@@ -90,6 +106,8 @@ kubectl wait --for=condition=available --timeout=180s deployment/task-service -n
 kubectl wait --for=condition=available --timeout=180s deployment/activity-service -n java-tasks
 kubectl wait --for=condition=available --timeout=180s deployment/notification-service -n java-tasks
 kubectl wait --for=condition=available --timeout=180s deployment/gateway-service -n java-tasks
+kubectl wait --for=condition=available --timeout=180s deployment/go-auth-service -n go-ecommerce
+kubectl wait --for=condition=available --timeout=180s deployment/go-ecommerce-service -n go-ecommerce
 kubectl wait --for=condition=available --timeout=120s deployment/prometheus -n monitoring
 kubectl wait --for=condition=available --timeout=120s deployment/grafana -n monitoring
 
@@ -97,9 +115,10 @@ echo ""
 echo "==> All services deployed!"
 echo ""
 echo "    Namespaces:"
-echo "      ai-services  — Python AI services + Qdrant"
-echo "      java-tasks   — Java microservices + databases"
-echo "      monitoring   — Prometheus + Grafana"
+echo "      ai-services    — Python AI services + Qdrant"
+echo "      java-tasks     — Java microservices + databases"
+echo "      go-ecommerce   — Go auth + ecommerce services"
+echo "      monitoring     — Prometheus + Grafana"
 echo ""
 echo "    Next steps:"
 echo "      1. Run 'minikube tunnel' in a separate terminal (requires sudo)"
@@ -112,6 +131,8 @@ echo "      /debug/*        — Debug assistant API"
 echo "      /graphql        — Java GraphQL API"
 echo "      /graphiql       — GraphQL IDE"
 echo "      /auth/*         — OAuth authentication"
+echo "      /go-auth/*      — Go auth API"
+echo "      /go-api/*       — Go ecommerce API"
 echo "      /grafana/       — Monitoring dashboards"
 echo "      /rabbitmq/      — Message broker UI"
 echo ""

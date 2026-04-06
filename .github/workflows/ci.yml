@@ -413,12 +413,15 @@ jobs:
           for f in $(find k8s/ai-services -name '*.yml'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
           for f in $(find java/k8s -name '*.yml' -not -path '*/secrets/*'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
           for f in $(find k8s/monitoring -name '*.yml'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
+          for f in $(find go/k8s -name '*.yml' -not -path '*/secrets/*'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
 
           # Restart deployments to pull new images
           $SSH "kubectl rollout restart deployment -n ai-services"
           $SSH "kubectl rollout restart deployment -n java-tasks"
+          $SSH "kubectl rollout restart deployment -n go-ecommerce"
           $SSH "kubectl rollout status deployment -n ai-services --timeout=180s"
           $SSH "kubectl rollout status deployment -n java-tasks --timeout=180s"
+          $SSH "kubectl rollout status deployment -n go-ecommerce --timeout=180s"
 
           rm -f ~/.ssh/deploy_key
 
