@@ -125,7 +125,7 @@ class TaskServiceIntegrationTest {
     void analyticsEndpoints_returnStats() throws Exception {
         // Create a project
         var projectReq = new CreateProjectRequest("Analytics Project", "For analytics");
-        String projectJson = mockMvc.perform(post("/api/projects")
+        String projectJson = mockMvc.perform(post("/projects")
                         .header("Authorization", "Bearer " + accessToken)
                         .header("X-User-Id", testUser.getId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -137,7 +137,7 @@ class TaskServiceIntegrationTest {
 
         // Create tasks with different priorities
         for (String title : List.of("Task 1", "Task 2", "Task 3")) {
-            mockMvc.perform(post("/api/tasks")
+            mockMvc.perform(post("/tasks")
                             .header("Authorization", "Bearer " + accessToken)
                             .header("X-User-Id", testUser.getId().toString())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -148,7 +148,7 @@ class TaskServiceIntegrationTest {
         }
 
         // Get project stats
-        mockMvc.perform(get("/api/analytics/projects/{id}/stats", projectId)
+        mockMvc.perform(get("/analytics/projects/{id}/stats", projectId)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.taskCountByStatus.TODO").value(3))
@@ -156,7 +156,7 @@ class TaskServiceIntegrationTest {
                 .andExpect(jsonPath("$.overdueCount").value(0));
 
         // Get velocity (may be empty but should return valid structure)
-        mockMvc.perform(get("/api/analytics/projects/{id}/velocity", projectId)
+        mockMvc.perform(get("/analytics/projects/{id}/velocity", projectId)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.weeklyThroughput").isArray());

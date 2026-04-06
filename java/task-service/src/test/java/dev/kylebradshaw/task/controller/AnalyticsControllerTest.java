@@ -50,7 +50,7 @@ class AnalyticsControllerTest {
                 List.of(new MemberWorkloadRow(UUID.randomUUID(), "Alice", 3, 5)));
         when(analyticsService.getProjectStats(projectId)).thenReturn(stats);
 
-        mockMvc.perform(get("/api/analytics/projects/{id}/stats", projectId))
+        mockMvc.perform(get("/analytics/projects/{id}/stats", projectId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.overdueCount").value(1))
                 .andExpect(jsonPath("$.avgCompletionTimeHours").value(24.5))
@@ -66,7 +66,7 @@ class AnalyticsControllerTest {
                 new PercentilesRow(24.0, 48.0, 120.0));
         when(analyticsService.getVelocityMetrics(projectId, 8)).thenReturn(velocity);
 
-        mockMvc.perform(get("/api/analytics/projects/{id}/velocity", projectId))
+        mockMvc.perform(get("/analytics/projects/{id}/velocity", projectId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.weeklyThroughput[0].week").value("2026-W14"))
                 .andExpect(jsonPath("$.avgLeadTimeHours").value(36.2))
@@ -79,7 +79,7 @@ class AnalyticsControllerTest {
         var velocity = new VelocityResponse(List.of(), null, new PercentilesRow(0, 0, 0));
         when(analyticsService.getVelocityMetrics(projectId, 4)).thenReturn(velocity);
 
-        mockMvc.perform(get("/api/analytics/projects/{id}/velocity", projectId)
+        mockMvc.perform(get("/analytics/projects/{id}/velocity", projectId)
                         .param("weeks", "4"))
                 .andExpect(status().isOk());
     }
