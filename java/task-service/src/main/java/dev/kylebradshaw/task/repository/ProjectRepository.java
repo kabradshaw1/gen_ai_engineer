@@ -13,4 +13,6 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     @Query("SELECT p FROM Project p JOIN FETCH p.owner WHERE p.id = :id")
     java.util.Optional<Project> findByIdWithOwner(@Param("id") UUID id);
+
+    List<Project> findByOwnerId(UUID ownerId);
 }
