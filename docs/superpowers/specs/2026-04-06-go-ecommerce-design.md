@@ -1,12 +1,12 @@
-# Go Ecommerce Service — Design Spec
+# Go Ecommerce Platform — Design Spec
 
 ## Overview
 
-A Go ecommerce REST API demonstrating backend engineering skills for a Go backend developer role. The service covers: RESTful API design with Gin, JWT authentication, PostgreSQL data modeling, Redis caching, RabbitMQ async order processing, Prometheus/Grafana observability, and comprehensive testing (unit, integration, benchmark).
+A Go microservices ecommerce platform demonstrating backend engineering skills for a Go backend developer role. Two Go services: an **auth service** (user management, JWT tokens) and an **ecommerce service** (products, cart, orders, async processing). Together they demonstrate: microservice decomposition, RESTful API design with Gin, JWT authentication, PostgreSQL data modeling, Redis caching, RabbitMQ async order processing, Prometheus/Grafana observability, and comprehensive testing (unit, integration, benchmark).
 
 Frontend pages at `/go` (bio + links) and `/go/ecommerce` (storefront) in the existing Next.js app.
 
-**Future expansion note:** Scope B covers product catalog, cart, checkout, and async order processing. Potential additions: seller accounts, inventory management dashboard, search, product reviews, payment integration.
+**Future expansion note:** Current scope covers auth, product catalog, cart, checkout, and async order processing. Potential additions: seller accounts, inventory management dashboard, search, product reviews, payment integration.
 
 ## Tech Stack
 
@@ -19,48 +19,80 @@ Frontend pages at `/go` (bio + links) and `/go/ecommerce` (storefront) in the ex
 - **golangci-lint** — Linting
 - **testcontainers-go** or test DB — Integration tests
 
+## Service Architecture
+
+Two Go microservices with shared infrastructure:
+
+- **auth-service** — Owns user registration, login, token refresh. Owns the `users` table in `ecommercedb`.
+- **ecommerce-service** — Owns products, cart, orders, async processing. Validates JWTs locally using shared secret (no inter-service call needed for auth).
+
+Both services share the same JWT secret so tokens issued by auth-service are validated statelessly by ecommerce-service.
+
 ## Project Structure
 
 ```
-go/ecommerce-service/
-├── cmd/server/main.go        # Entry point, wiring
-├── internal/
-│   ├── handler/              # Gin HTTP handlers
-│   │   ├── auth.go
-│   │   ├── product.go
-│   │   ├── cart.go
-│   │   ├── order.go
-│   │   └── health.go
-│   ├── service/              # Business logic
-│   │   ├── auth.go
-│   │   ├── product.go
-│   │   ├── cart.go
-│   │   └── order.go
-│   ├── repository/           # Database access (pgx)
-│   │   ├── user.go
-│   │   ├── product.go
-│   │   ├── cart.go
-│   │   └── order.go
-│   ├── model/                # Domain types, DTOs
-│   │   ├── user.go
-│   │   ├── product.go
-│   │   ├── cart.go
-│   │   └── order.go
-│   ├── middleware/            # Auth, logging, metrics, CORS
-│   │   ├── auth.go
-│   │   ├── logging.go
-│   │   ├── metrics.go
-│   │   └── cors.go
-│   └── worker/               # RabbitMQ consumers
-│       └── order_processor.go
-├── migrations/               # SQL migration files
-│   ├── 001_create_users.sql
-│   ├── 002_create_products.sql
-│   ├── 003_create_cart_items.sql
-│   └── 004_create_orders.sql
-├── Dockerfile
-├── go.mod
-└── go.sum
+go/
+├── auth-service/
+│   ├── cmd/server/main.go        # Entry point
+│   ├── internal/
+│   │   ├── handler/              # Gin HTTP handlers
+│   │   │   ├── auth.go
+│   │   │   └── health.go
+│   │   ├── service/              # Business logic
+│   │   │   └── auth.go
+│   │   ├── repository/           # Database access (pgx)
+│   │   │   └── user.go
+│   │   ├── model/                # Domain types
+│   │   │   └── user.go
+│   │   └── middleware/           # Logging, metrics, CORS
+│   │       ├── logging.go
+│   │       ├── metrics.go
+│   │       └── cors.go
+│   ├── migrations/
+│   │   └── 001_create_users.sql
+│   ├── Dockerfile
+│   └── go.mod
+│
+├── ecommerce-service/
+│   ├── cmd/server/main.go        # Entry point
+│   ├── internal/
+│   │   ├── handler/              # Gin HTTP handlers
+│   │   │   ├── product.go
+│   │   │   ├── cart.go
+│   │   │   ├── order.go
+│   │   │   └── health.go
+│   │   ├── service/              # Business logic
+│   │   │   ├── product.go
+│   │   │   ├── cart.go
+│   │   │   └── order.go
+│   │   ├── repository/           # Database access (pgx)
+│   │   │   ├── product.go
+│   │   │   ├── cart.go
+│   │   │   └── order.go
+│   │   ├── model/                # Domain types
+│   │   │   ├── product.go
+│   │   │   ├── cart.go
+│   │   │   └── order.go
+│   │   ├── middleware/           # Auth, logging, metrics, CORS
+│   │   │   ├── auth.go           # JWT validation (shared secret)
+│   │   │   ├── logging.go
+│   │   │   ├── metrics.go
+│   │   │   └── cors.go
+│   │   └── worker/               # RabbitMQ consumers
+│   │       └── order_processor.go
+│   ├── migrations/
+│   │   ├── 001_create_products.sql
+│   │   ├── 002_create_cart_items.sql
+│   │   └── 003_create_orders.sql
+│   ├── Dockerfile
+│   └── go.mod
+│
+└── k8s/                          # Shared K8s manifests
+    ├── namespace.yml
+    ├── configmaps/
+    ├── deployments/
+    ├── services/
+    └── ingress.yml
 ```
 
 ## Data Model
@@ -126,19 +158,25 @@ Unique constraint on `(user_id, product_id)`.
 
 ## REST API
 
-### Auth (public)
+### Auth Service (port 8091)
+
+All public endpoints:
 
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | /auth/register | Register, returns tokens |
 | POST | /auth/login | Login, returns tokens |
 | POST | /auth/refresh | Refresh access token |
+| GET | /health | Postgres connectivity check |
+| GET | /metrics | Prometheus scrape endpoint |
 
 Request/response format matches existing Java auth so the frontend auth utilities work as-is.
 
 **Token config:** Access token 15min TTL, refresh token 7 day TTL. Same JWT secret as Java services (shared K8s secret).
 
-### Products (public)
+### Ecommerce Service (port 8092)
+
+#### Products (public)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -148,7 +186,7 @@ Request/response format matches existing Java auth so the frontend auth utilitie
 
 Product list and categories cached in Redis with 5min TTL. Cache invalidated when stock changes.
 
-### Cart (authenticated)
+#### Cart (authenticated)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -157,7 +195,7 @@ Product list and categories cached in Redis with 5min TTL. Cache invalidated whe
 | PUT | /cart/:itemId | Update quantity `{quantity}` |
 | DELETE | /cart/:itemId | Remove item |
 
-### Orders (authenticated)
+#### Orders (authenticated)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -165,14 +203,14 @@ Product list and categories cached in Redis with 5min TTL. Cache invalidated whe
 | GET | /orders | User's order history |
 | GET | /orders/:id | Order detail with items |
 
-### Health & Metrics
+#### Health & Metrics
 
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | /health | Postgres, Redis, RabbitMQ connectivity |
 | GET | /metrics | Prometheus scrape endpoint |
 
-### Error Responses
+### Error Responses (both services)
 
 All errors return consistent JSON:
 
@@ -193,7 +231,7 @@ Standard HTTP status codes: 400 (bad request), 401 (no/invalid token), 403 (forb
    - Publishes `order.created` message to RabbitMQ
    - Returns order ID immediately
 
-2. RabbitMQ worker (goroutine in same process):
+2. RabbitMQ worker (goroutine in ecommerce-service process):
    - Consumes from `ecommerce.orders` queue
    - Validates stock for all items
    - Decrements inventory in a transaction
@@ -220,10 +258,12 @@ Worker pool pattern with configurable concurrency (default 3 goroutines). Gracef
 
 ## Authentication
 
+- **auth-service** owns user registration, login, token issuance
+- **ecommerce-service** validates JWTs locally using the shared secret — no inter-service call needed
 - Same JWT structure as Java services: `{sub: userId, email, iat, exp}`
-- Same shared secret from `java-secrets` K8s secret
+- Same shared secret from K8s secret (`go-secrets` in `go-ecommerce` namespace)
 - bcrypt password hashing (compatible with Java's BCryptPasswordEncoder)
-- Gin middleware extracts user ID from JWT, sets in Gin context
+- Gin middleware in ecommerce-service extracts user ID from JWT, sets in Gin context
 
 ## Frontend
 
@@ -286,17 +326,20 @@ JSON logs via `slog` (Go stdlib):
 
 ### `.github/workflows/go-ci.yml`
 
+Matrix strategy across both services (`auth-service`, `ecommerce-service`):
+
 - **Lint:** `golangci-lint run`
 - **Test:** `go test ./... -v -race -coverprofile=coverage.out`
 - **Build:** `go build ./cmd/server`
-- **Docker:** Build and push to GHCR on main
+- **Docker:** Build and push to GHCR on main (per service)
 
 ### K8s Deployment
 
 Manifests in `go/k8s/` following existing pattern:
-- Deployment, Service, ConfigMap
-- Shares existing Postgres, Redis, RabbitMQ
-- Ingress route: `/go-api/*` → ecommerce-service
+- `go-ecommerce` namespace
+- Deployments, Services, ConfigMaps for both auth-service and ecommerce-service
+- Shares existing Postgres, Redis, RabbitMQ (in `java-tasks` namespace via ExternalName or cross-namespace service references)
+- Ingress routes: `/go-auth/*` → auth-service, `/go-api/*` → ecommerce-service
 - Included in CI deploy step's `find` + pipe pattern
 
 ### Preflight
@@ -317,13 +360,22 @@ Manifests in `go/k8s/` following existing pattern:
 
 ### Docker Compose (local dev)
 
-New service added to `docker-compose.yml` or a separate `go/docker-compose.yml`:
+Separate `go/docker-compose.yml`:
 
 ```yaml
-ecommerce-service:
-  build: ./go/ecommerce-service
+auth-service:
+  build: ./auth-service
   ports:
-    - "8090:8090"
+    - "8091:8091"
+  environment:
+    DATABASE_URL: postgres://taskuser:taskpass@postgres:5432/ecommercedb
+    JWT_SECRET: ${JWT_SECRET}
+    ALLOWED_ORIGINS: http://localhost:3000
+
+ecommerce-service:
+  build: ./ecommerce-service
+  ports:
+    - "8092:8092"
   environment:
     DATABASE_URL: postgres://taskuser:taskpass@postgres:5432/ecommercedb
     REDIS_URL: redis://redis:6379
@@ -331,6 +383,8 @@ ecommerce-service:
     JWT_SECRET: ${JWT_SECRET}
     ALLOWED_ORIGINS: http://localhost:3000
 ```
+
+Both services depend on the shared Postgres, Redis, and RabbitMQ from the main `docker-compose.yml`.
 
 ### Seed Data
 
