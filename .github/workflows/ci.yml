@@ -7,9 +7,39 @@ on:
     branches: [main]
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.filter.outputs.python }}
+      java: ${{ steps.filter.outputs.java }}
+      go: ${{ steps.filter.outputs.go }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      k8s: ${{ steps.filter.outputs.k8s }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            python:
+              - 'services/**'
+            java:
+              - 'java/**'
+            go:
+              - 'go/**'
+            frontend:
+              - 'frontend/**'
+            k8s:
+              - 'k8s/**'
+              - 'java/k8s/**'
+              - 'go/k8s/**'
+
   backend-lint:
     name: Backend Lint
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +55,8 @@ jobs:
   backend-tests:
     name: Backend Tests (${{ matrix.service }})
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true'
     strategy:
       matrix:
         service: [ingestion, chat, debug]
@@ -58,6 +90,8 @@ jobs:
   frontend-checks:
     name: Frontend Checks
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.go == 'true' || needs.changes.outputs.java == 'true'
     defaults:
       run:
         working-directory: frontend
@@ -86,6 +120,8 @@ jobs:
   docker-build:
     name: Docker Build (${{ matrix.service }})
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true'
     permissions:
       packages: write
     strategy:
@@ -117,6 +153,8 @@ jobs:
   java-lint:
     name: Java Lint (Checkstyle)
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.java == 'true'
     defaults:
       run:
         working-directory: java
@@ -136,6 +174,8 @@ jobs:
   java-unit-tests:
     name: Java Unit Tests (${{ matrix.service }})
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.java == 'true'
     defaults:
       run:
         working-directory: java
@@ -169,7 +209,8 @@ jobs:
   java-docker-build:
     name: Java Docker Build (${{ matrix.service }})
     runs-on: ubuntu-latest
-    needs: [java-lint, java-unit-tests]
+    needs: [changes, java-lint, java-unit-tests]
+    if: needs.changes.outputs.java == 'true'
     permissions:
       packages: write
     defaults:
@@ -215,9 +256,44 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  go-docker-build:
+    name: Go Docker Build (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.go == 'true'
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        service: [auth-service, ecommerce-service]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: go/${{ matrix.service }}
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: ghcr.io/${{ github.repository }}/go-${{ matrix.service }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   security-bandit:
     name: Security - Bandit (Python SAST)
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -246,6 +322,8 @@ jobs:
   security-pip-audit:
     name: Security - pip-audit (${{ matrix.service }})
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true'
     strategy:
       matrix:
         service: [ingestion, chat, debug]
@@ -275,6 +353,8 @@ jobs:
   security-npm-audit:
     name: Security - npm audit
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true'
     defaults:
       run:
         working-directory: frontend
@@ -318,6 +398,8 @@ jobs:
           - java/activity-service/Dockerfile
           - java/notification-service/Dockerfile
           - java/gateway-service/Dockerfile
+          - go/auth-service/Dockerfile
+          - go/ecommerce-service/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
@@ -329,6 +411,8 @@ jobs:
   security-cors-check:
     name: Security - CORS Guardrail
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.outputs.python == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -378,18 +462,16 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs:
-      - backend-lint
-      - backend-tests
-      - frontend-checks
+      - changes
       - docker-build
       - java-docker-build
-      - security-bandit
-      - security-pip-audit
-      - security-npm-audit
+      - go-docker-build
       - security-gitleaks
       - security-hadolint
-      - security-cors-check
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' && github.event_name == 'push' &&
+      !contains(needs.*.result, 'failure')
     steps:
       - uses: actions/checkout@v4
 
@@ -403,28 +485,41 @@ jobs:
       - name: Apply K8s manifests via SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          PYTHON_CHANGED: ${{ needs.changes.outputs.python }}
+          JAVA_CHANGED: ${{ needs.changes.outputs.java }}
+          GO_CHANGED: ${{ needs.changes.outputs.go }}
+          K8S_CHANGED: ${{ needs.changes.outputs.k8s }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           SSH="ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key PC@100.79.113.84"
 
-          # Apply namespaces first to avoid race conditions
+          # Always apply namespaces and manifests (cheap, idempotent)
           for f in $(find k8s go/k8s java/k8s -name 'namespace.yml' 2>/dev/null); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
-
-          # Apply remaining manifests
           for f in $(find k8s/ai-services -name '*.yml' -not -name 'namespace.yml'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
           for f in $(find java/k8s -name '*.yml' -not -name 'namespace.yml' -not -path '*/secrets/*'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
           for f in $(find k8s/monitoring -name '*.yml' -not -name 'namespace.yml'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
           for f in $(find go/k8s -name '*.yml' -not -name 'namespace.yml' -not -path '*/secrets/*'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
 
-          # Restart deployments to pull new images
-          $SSH "kubectl rollout restart deployment -n ai-services"
-          $SSH "kubectl rollout restart deployment -n java-tasks"
-          $SSH "kubectl rollout restart deployment -n go-ecommerce"
-          $SSH "kubectl rollout status deployment -n ai-services --timeout=180s"
-          $SSH "kubectl rollout status deployment -n java-tasks --timeout=180s"
-          $SSH "kubectl rollout status deployment -n go-ecommerce --timeout=180s"
+          # Only restart deployments that have new images
+          if [ "$PYTHON_CHANGED" = "true" ] || [ "$K8S_CHANGED" = "true" ]; then
+            echo "Restarting ai-services..."
+            $SSH "kubectl rollout restart deployment -n ai-services"
+            $SSH "kubectl rollout status deployment -n ai-services --timeout=180s"
+          fi
+
+          if [ "$JAVA_CHANGED" = "true" ] || [ "$K8S_CHANGED" = "true" ]; then
+            echo "Restarting java-tasks..."
+            $SSH "kubectl rollout restart deployment -n java-tasks"
+            $SSH "kubectl rollout status deployment -n java-tasks --timeout=180s"
+          fi
+
+          if [ "$GO_CHANGED" = "true" ] || [ "$K8S_CHANGED" = "true" ]; then
+            echo "Restarting go-ecommerce..."
+            $SSH "kubectl rollout restart deployment -n go-ecommerce"
+            $SSH "kubectl rollout status deployment -n go-ecommerce --timeout=180s"
+          fi
 
           rm -f ~/.ssh/deploy_key
 
