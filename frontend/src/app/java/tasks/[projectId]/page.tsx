@@ -5,7 +5,7 @@ import { useQuery } from "@apollo/client/react";
 import { gql } from "@apollo/client";
 import Link from "next/link";
 import { KanbanBoard } from "@/components/java/KanbanBoard";
-import { GATEWAY_URL, getAccessToken } from "@/lib/auth";
+import { GATEWAY_URL, getAccessToken, refreshAccessToken } from "@/lib/auth";
 import { useEffect, useState, useCallback } from "react";
 
 const GET_PROJECT = gql`
@@ -47,13 +47,22 @@ export default function ProjectPage() {
   const [tasksLoading, setTasksLoading] = useState(true);
 
   const loadTasks = useCallback(async (): Promise<Task[]> => {
-    const token = getAccessToken();
-    const res = await fetch(
+    let token = getAccessToken();
+    let res = await fetch(
       `${GATEWAY_URL}/tasks?projectId=${projectId}`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }
     );
+    if (res.status === 403) {
+      token = await refreshAccessToken();
+      if (token) {
+        res = await fetch(
+          `${GATEWAY_URL}/tasks?projectId=${projectId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+    }
     return res.ok ? res.json() : [];
   }, [projectId]);
 
