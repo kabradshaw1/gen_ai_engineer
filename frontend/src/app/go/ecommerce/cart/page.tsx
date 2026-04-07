@@ -9,7 +9,7 @@ interface CartItem {
   productId: string;
   productName: string;
   quantity: number;
-  priceCents: number;
+  productPrice: number;
 }
 
 function formatPrice(cents: number): string {
@@ -69,7 +69,7 @@ export default function CartPage() {
   }
 
   const total = items.reduce(
-    (sum, item) => sum + item.priceCents * item.quantity,
+    (sum, item) => sum + item.productPrice * item.quantity,
     0,
   );
 
@@ -101,8 +101,8 @@ export default function CartPage() {
                   <p className="font-medium">{item.productName}</p>
                   <p className="text-sm text-muted-foreground">
                     Qty: {item.quantity} &times;{" "}
-                    {formatPrice(item.priceCents)} ={" "}
-                    {formatPrice(item.priceCents * item.quantity)}
+                    {formatPrice(item.productPrice)} ={" "}
+                    {formatPrice(item.productPrice * item.quantity)}
                   </p>
                 </div>
                 <button
