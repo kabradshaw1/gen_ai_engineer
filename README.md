@@ -1,0 +1,116 @@
+# Kyle Bradshaw — Portfolio
+
+I'm a developer who primarily focuses on **backend and AI integration**. This repo is a polyglot, production-style portfolio that shows how I design services, wire them together, and integrate LLMs into real applications.
+
+**Live demo:** [kylebradshaw.dev](https://kylebradshaw.dev) · **API:** `api.kylebradshaw.dev`
+
+---
+
+## What this project demonstrates
+
+- **Backend engineering across three languages** — Go, Java (Spring Boot), and Python (FastAPI), each chosen where it fits best
+- **AI integration** — a full RAG pipeline and an agentic debugging assistant, both backed by locally-hosted LLMs
+- **Production infrastructure** — Kubernetes, NGINX Ingress, Cloudflare Tunnel, Prometheus/Grafana, and a full CI/CD pipeline deploying to a home-lab cluster
+- **A working full-stack surface** — Next.js + TypeScript frontend on Vercel, talking to REST, GraphQL, and streaming AI endpoints
+
+---
+
+## Backend services
+
+### Go — where I'm strongest
+- **`auth-service`** — JWT auth (register / login / refresh), PostgreSQL
+- **`ecommerce-service`** — products, cart, orders, Redis caching, RabbitMQ worker pool
+
+### Java (Spring Boot)
+- **`task-service`** — task & project CRUD, PostgreSQL + JPA, Flyway migrations
+- **`activity-service`** — activity feed, MongoDB, Redis caching, analytics aggregation with HikariCP tuning
+- **`notification-service`** — event-driven notifications via RabbitMQ
+- **`gateway-service`** — GraphQL gateway federating the three above
+
+### Python (FastAPI) — the AI layer
+- **`ingestion`** — PDF upload, parse, chunk (LangChain splitters), embed, store, delete
+- **`chat`** — question embedding, vector search, RAG prompt assembly, streaming responses
+- **`debug`** — codebase indexing, agent loop, tool execution, streamed reasoning
+
+---
+
+## AI integration
+
+Two LLM-powered tools are featured in the frontend:
+
+1. **Document Q&A Assistant** — Upload a PDF, ask questions. Full RAG pipeline: parse → chunk → embed (`nomic-embed-text`) → store in Qdrant → retrieve → stream answers from **Qwen 2.5 14B** via Ollama.
+2. **Debug Assistant** — An agentic loop over an indexed codebase. The model plans, calls tools (search / read / inspect), and streams its reasoning while it works through a bug.
+
+Both services are documented end-to-end as Jupyter ADR notebooks in `docs/adr/document-qa/` and `docs/adr/document-debugger/` — the best place to see how I think about prompt design, chunking strategies, and agent tool design.
+
+---
+
+## Frontend
+
+Next.js + TypeScript + shadcn/ui + Apollo Client, deployed on Vercel. Sections for the AI tools (`ai/rag`, `ai/debug`), Java task management (`java/tasks`), and the Go ecommerce store (`go/`). Playwright covers both mocked E2E and post-deploy production smoke tests.
+
+---
+
+## Infrastructure & DevOps
+
+- **Kubernetes (Minikube)** on a Windows PC with an RTX 3090 running Ollama natively for GPU inference
+- **Namespaces:** `ai-services`, `java-tasks`, `go-ecommerce`, `monitoring`
+- **NGINX Ingress** with path-based routing across all stacks
+- **Cloudflare Tunnel** exposes the home-lab cluster publicly as `api.kylebradshaw.dev`
+- **Docker Compose** for local development
+- **Prometheus + Grafana** for metrics and dashboards
+- **GitHub Actions CI/CD** — ruff, pytest, tsc, Next.js build, checkstyle, golangci-lint, Bandit, pip-audit, npm audit, gitleaks, Hadolint, Playwright E2E, and auto-deploy to the cluster via SSH
+
+---
+
+## Tech stack
+
+| Layer | Tools |
+|---|---|
+| **Backend** | Go, Java (Spring Boot, Gradle, JPA, GraphQL), Python (FastAPI) |
+| **AI/ML** | Ollama, Qwen 2.5 14B, nomic-embed-text, Qdrant, LangChain |
+| **Data** | PostgreSQL, MongoDB, Redis, Qdrant, RabbitMQ |
+| **Frontend** | Next.js, TypeScript, shadcn/ui, Apollo Client, Playwright |
+| **Infra** | Docker, Kubernetes, NGINX Ingress, Cloudflare Tunnel, Prometheus, Grafana |
+| **CI/CD** | GitHub Actions, ruff, pytest, golangci-lint, checkstyle, Bandit, gitleaks |
+
+---
+
+## Repository layout
+
+```
+services/          Python AI microservices (ingestion, chat, debug)
+java/              Spring Boot microservices (task, activity, notification, gateway)
+go/                Go microservices (auth, ecommerce)
+frontend/          Next.js app
+k8s/               Kubernetes manifests for all namespaces
+nginx/             Reverse-proxy config (local dev)
+monitoring/        Prometheus + Grafana
+docs/adr/          Architecture Decision Records (notebooks + markdown)
+.github/workflows/ CI/CD pipelines
+```
+
+---
+
+## Architecture Decision Records
+
+Every major design choice is written up in `docs/adr/`:
+
+- **`document-qa/`** — 7 notebooks walking through the RAG pipeline build
+- **`document-debugger/`** — 3 notebooks on code-aware chunking, the agent loop, and tool design
+- **`java-task-management/`** — 7 lessons on the Spring Boot stack (JPA, GraphQL, caching, analytics)
+- Standalone markdown ADRs covering CI/CD, deployment topology, K8s migration, auth, and more
+
+---
+
+## For hiring managers
+
+If you're short on time:
+
+1. **`go/`** — my strongest language; start here for backend style
+2. **`services/`** — FastAPI + RAG + agent implementation
+3. **`docs/adr/document-qa/`** and **`docs/adr/document-debugger/`** — how and why the AI services were built
+4. **`.github/workflows/`** — CI/CD, security scanning, and deployment
+5. **`k8s/`** — production Kubernetes topology
+
+Thanks for taking a look. — Kyle
