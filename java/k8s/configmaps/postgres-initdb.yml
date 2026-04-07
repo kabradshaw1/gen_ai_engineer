@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  namespace: java-tasks
+data:
+  # Runs only on a fresh data directory (postgres official image behavior).
+  # Creates the additional database used by the Go ecommerce/auth services,
+  # which share this postgres instance. POSTGRES_DB=taskdb handles the Java side.
+  01-create-ecommercedb.sql: |
+    CREATE DATABASE ecommercedb OWNER taskuser;

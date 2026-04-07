@@ -28,6 +28,9 @@ spec:
                 secretKeyRef:
                   name: java-secrets
                   key: postgres-password
+          volumeMounts:
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
           resources:
             requests:
               memory: "128Mi"
@@ -35,3 +38,7 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+      volumes:
+        - name: initdb
+          configMap:
+            name: postgres-initdb
