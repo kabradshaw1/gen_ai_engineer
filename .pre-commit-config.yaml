@@ -27,6 +27,13 @@ repos:
         language: system
         files: ^frontend/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false
+      - id: frontend-build
+        name: Frontend Build (next build)
+        entry: bash -c 'cd frontend && npm run build'
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+        stages: [pre-push]
       - id: go-lint
         name: Go Lint
         entry: bash -c 'cd go/auth-service && ~/go/bin/golangci-lint run ./... && cd ../ecommerce-service && ~/go/bin/golangci-lint run ./...'
