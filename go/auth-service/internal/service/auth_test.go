@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -14,7 +15,8 @@ import (
 // --- mock repo ---
 
 type mockUserRepo struct {
-	users map[string]*model.User // keyed by email
+	users    map[string]*model.User // keyed by email
+	upsertFn func(ctx context.Context, email, name, avatarURL string) (*model.User, error)
 }
 
 func newMockRepo() *mockUserRepo {
@@ -53,7 +55,10 @@ func (m *mockUserRepo) FindByID(_ context.Context, id string) (*model.User, erro
 	return nil, fmt.Errorf("user not found")
 }
 
-func (m *mockUserRepo) UpsertGoogleUser(_ context.Context, _ string, _ string, _ string) (*model.User, error) {
+func (m *mockUserRepo) UpsertGoogleUser(ctx context.Context, email, name, avatarURL string) (*model.User, error) {
+	if m.upsertFn != nil {
+		return m.upsertFn(ctx, email, name, avatarURL)
+	}
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -132,6 +137,68 @@ func TestRefresh(t *testing.T) {
 	}
 	if resp.AccessToken == "" || resp.RefreshToken == "" {
 		t.Error("expected non-empty tokens")
+	}
+}
+
+func TestAuthenticateGoogleUser_NewUser(t *testing.T) {
+	userID := uuid.New()
+	avatarURL := "https://example.com/pic.png"
+
+	repo := newMockRepo()
+	repo.upsertFn = func(_ context.Context, email, name, avatar string) (*model.User, error) {
+		if email != "new@example.com" {
+			t.Errorf("expected email new@example.com, got %s", email)
+		}
+		if name != "New User" {
+			t.Errorf("expected name 'New User', got %s", name)
+		}
+		if avatar != avatarURL {
+			t.Errorf("expected avatarURL %s, got %s", avatarURL, avatar)
+		}
+		return &model.User{
+			ID:           userID,
+			Email:        email,
+			Name:         name,
+			AvatarURL:    &avatar,
+			PasswordHash: nil,
+			CreatedAt:    time.Now(),
+		}, nil
+	}
+
+	svc := NewAuthService(repo, "test-secret", 900000, 604800000)
+
+	resp, err := svc.AuthenticateGoogleUser(context.Background(), "new@example.com", "New User", avatarURL)
+	if err != nil {
+		t.Fatalf("AuthenticateGoogleUser failed: %v", err)
+	}
+	if resp.UserID != userID.String() {
+		t.Errorf("expected UserID %s, got %s", userID.String(), resp.UserID)
+	}
+	if resp.Email != "new@example.com" {
+		t.Errorf("expected email new@example.com, got %s", resp.Email)
+	}
+	if resp.AvatarURL != avatarURL {
+		t.Errorf("expected AvatarURL %s, got %s", avatarURL, resp.AvatarURL)
+	}
+	if resp.AccessToken == "" {
+		t.Error("expected non-empty AccessToken")
+	}
+	if resp.RefreshToken == "" {
+		t.Error("expected non-empty RefreshToken")
+	}
+}
+
+func TestAuthenticateGoogleUser_RepoError(t *testing.T) {
+	repo := newMockRepo()
+	repo.upsertFn = func(_ context.Context, _, _, _ string) (*model.User, error) {
+		return nil, errors.New("db down")
+	}
+
+	svc := NewAuthService(repo, "test-secret", 900000, 604800000)
+
+	_, err := svc.AuthenticateGoogleUser(context.Background(), "x@example.com", "X", "")
+	if err == nil {
+		t.Fatal("expected an error from AuthenticateGoogleUser, got nil")
 	}
 }
 
