@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState,
 } from "react";
 import { ApolloProvider } from "@apollo/client/react";
@@ -64,14 +65,25 @@ function handleAuthResponse(data: {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    if (typeof window === "undefined" || !checkIsLoggedIn()) return null;
+  // Always start logged-out so the server-rendered HTML matches the client's
+  // first render. The real state is hydrated from localStorage in useEffect.
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    if (!checkIsLoggedIn()) return;
     const stored = localStorage.getItem("java_user");
-    return stored ? JSON.parse(stored) : null;
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => typeof window !== "undefined" && checkIsLoggedIn(),
-  );
+    if (stored) {
+      try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setUser(JSON.parse(stored));
+      } catch {
+        /* corrupt entry — ignore */
+      }
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsAuthenticated(true);
+  }, []);
 
   const login = useCallback(async (code: string, redirectUri: string) => {
     const res = await fetch(`${GATEWAY_URL}/auth/google`, {
