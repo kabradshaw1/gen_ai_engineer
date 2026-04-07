@@ -1,12 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FileText } from "lucide-react";
 import { useAuth } from "@/components/java/AuthProvider";
 import { NotificationBell } from "@/components/java/NotificationBell";
 
 export function SiteHeader() {
   const { user, isLoggedIn, logout } = useAuth();
+  const pathname = usePathname();
+
+  const isActive = (prefix: string) =>
+    pathname === prefix || pathname.startsWith(prefix + "/");
+
+  const navLinkClass = (prefix: string) =>
+    isActive(prefix)
+      ? "text-sm text-foreground border-b-2 border-foreground pb-px transition-colors"
+      : "text-sm text-muted-foreground hover:text-foreground transition-colors";
 
   return (
     <header className="border-b border-foreground/10 bg-background">
@@ -16,10 +26,13 @@ export function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-4">
-          <Link
-            href="/go"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <Link href="/ai" className={navLinkClass("/ai")}>
+            AI
+          </Link>
+          <Link href="/java" className={navLinkClass("/java")}>
+            Java
+          </Link>
+          <Link href="/go" className={navLinkClass("/go")}>
             Go
           </Link>
           <a
