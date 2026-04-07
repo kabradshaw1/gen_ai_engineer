@@ -44,6 +44,8 @@ services:
       DATABASE_URL: postgres://taskuser:taskpass@postgres:5432/ecommercedb
       JWT_SECRET: dev-secret-key-at-least-32-characters-long
       ALLOWED_ORIGINS: http://localhost:3000
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       PORT: "8091"
     depends_on:
       postgres:
