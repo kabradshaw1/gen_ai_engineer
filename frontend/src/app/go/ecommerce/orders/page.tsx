@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { goApiFetch } from "@/lib/go-api";
 
 interface Order {
@@ -30,19 +33,26 @@ function statusColor(status: string): string {
 }
 
 export default function OrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     goApiFetch("/orders")
       .then((r) => {
+        if (r.status === 401 || r.status === 403) {
+          router.replace("/go/login?next=/go/ecommerce/orders");
+          return null;
+        }
         if (!r.ok) throw new Error("Failed to load orders");
         return r.json();
       })
-      .then((data) => setOrders(data ?? []))
+      .then((data) => {
+        if (data) setOrders(data ?? []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   if (loading) {
     return (
@@ -54,7 +64,14 @@ export default function OrdersPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-2xl font-bold">Orders</h1>
+      <Link
+        href="/go/ecommerce"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="size-4" />
+        Back to store
+      </Link>
+      <h1 className="mt-6 text-2xl font-bold">Orders</h1>
 
       {orders.length === 0 ? (
         <p className="mt-8 text-muted-foreground">No orders yet.</p>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useGoCart } from "@/components/go/GoCartProvider";
 import { goApiFetch } from "@/lib/go-api";
@@ -19,6 +20,7 @@ function formatPrice(cents: number): string {
 }
 
 export default function CartPage() {
+  const router = useRouter();
   const { refresh } = useGoCart();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,10 @@ export default function CartPage() {
   const fetchCart = useCallback(async () => {
     try {
       const res = await goApiFetch("/cart");
+      if (res.status === 401 || res.status === 403) {
+        router.replace("/go/login?next=/go/ecommerce/cart");
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setItems(data?.items ?? []);
@@ -35,7 +41,7 @@ export default function CartPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     fetchCart();
@@ -45,6 +51,10 @@ export default function CartPage() {
     const res = await goApiFetch(`/cart/${itemId}`, {
       method: "DELETE",
     });
+    if (res.status === 401 || res.status === 403) {
+      router.replace("/go/login?next=/go/ecommerce/cart");
+      return;
+    }
     if (res.ok) {
       setItems((prev) => prev.filter((i) => i.id !== itemId));
       await refresh();
@@ -58,8 +68,13 @@ export default function CartPage() {
       const res = await goApiFetch("/orders", {
         method: "POST",
       });
+      if (res.status === 401 || res.status === 403) {
+        router.replace("/go/login?next=/go/ecommerce/cart");
+        return;
+      }
       if (res.ok) {
         setItems([]);
+        await refresh();
         setMessage("Order placed successfully!");
       } else {
         const text = await res.text();
