@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/kabradshaw1/portfolio/go/auth-service/internal/google"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/handler"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/middleware"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/repository"
@@ -28,6 +29,22 @@ func main() {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		log.Fatal("JWT_SECRET is required")
+	}
+	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+	if googleClientID == "" {
+		log.Fatal("GOOGLE_CLIENT_ID is required")
+	}
+	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	if googleClientSecret == "" {
+		log.Fatal("GOOGLE_CLIENT_SECRET is required")
+	}
+	googleTokenURL := os.Getenv("GOOGLE_TOKEN_URL")
+	if googleTokenURL == "" {
+		googleTokenURL = "https://oauth2.googleapis.com/token"
+	}
+	googleUserinfoURL := os.Getenv("GOOGLE_USERINFO_URL")
+	if googleUserinfoURL == "" {
+		googleUserinfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
 	}
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 	if allowedOrigins == "" {
@@ -54,7 +71,8 @@ func main() {
 	// Wire dependencies
 	userRepo := repository.NewUserRepository(pool)
 	authSvc := service.NewAuthService(userRepo, jwtSecret, 900000, 604800000)
-	authHandler := handler.NewAuthHandler(authSvc, nil) // TODO(task8): wire google client
+	googleClient := google.NewClient(googleClientID, googleClientSecret, googleTokenURL, googleUserinfoURL)
+	authHandler := handler.NewAuthHandler(authSvc, googleClient)
 	healthHandler := handler.NewHealthHandler(pool)
 
 	// Set up Gin
@@ -68,6 +86,7 @@ func main() {
 	router.POST("/auth/register", authHandler.Register)
 	router.POST("/auth/login", authHandler.Login)
 	router.POST("/auth/refresh", authHandler.Refresh)
+	router.POST("/auth/google", authHandler.GoogleLogin)
 	router.GET("/health", healthHandler.Health)
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
