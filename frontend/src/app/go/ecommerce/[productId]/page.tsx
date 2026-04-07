@@ -27,12 +27,37 @@ export default function ProductDetailPage() {
   const params = useParams<{ productId: string }>();
   const router = useRouter();
   const { isLoggedIn } = useGoAuth();
-  const { refresh } = useGoCart();
+  const { items: cartItems, refresh } = useGoCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [removing, setRemoving] = useState(false);
+
+  const cartEntry = product
+    ? cartItems.find((i) => i.productId === product.id)
+    : undefined;
+
+  async function removeFromCart() {
+    if (!cartEntry) return;
+    setError("");
+    setRemoving(true);
+    try {
+      const res = await goApiFetch(`/cart/${cartEntry.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        await refresh();
+      } else if (res.status === 401 || res.status === 403) {
+        router.push(`/go/login?next=/go/ecommerce/${cartEntry.productId}`);
+      } else {
+        setError("Failed to remove from cart. Please try again.");
+      }
+    } finally {
+      setRemoving(false);
+    }
+  }
 
   useEffect(() => {
     fetch(`${GO_ECOMMERCE_URL}/products/${params.productId}`)
@@ -151,6 +176,21 @@ export default function ProductDetailPage() {
                 className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {added ? "Added!" : adding ? "Adding..." : "Add to Cart"}
+              </button>
+            </div>
+          )}
+          {cartEntry && (
+            <div className="mt-4 flex items-center gap-3 text-sm">
+              <span className="text-muted-foreground">
+                {cartEntry.quantity} in cart
+              </span>
+              <button
+                type="button"
+                onClick={removeFromCart}
+                disabled={removing}
+                className="text-red-500 hover:text-red-400 transition-colors disabled:opacity-50"
+              >
+                {removing ? "Removing…" : "Remove from cart"}
               </button>
             </div>
           )}
