@@ -8,7 +8,8 @@ import {
   useState,
 } from "react";
 import { useGoAuth } from "@/components/go/GoAuthProvider";
-import { GO_ECOMMERCE_URL, getGoAccessToken } from "@/lib/go-auth";
+import { goApiFetch } from "@/lib/go-api";
+import { getGoAccessToken } from "@/lib/go-auth";
 
 export interface GoCartItem {
   id: string;
@@ -42,15 +43,12 @@ export function GoCartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<GoCartItem[]>([]);
 
   const refresh = useCallback(async () => {
-    const token = getGoAccessToken();
-    if (!token) {
+    if (!getGoAccessToken()) {
       setItems([]);
       return;
     }
     try {
-      const res = await fetch(`${GO_ECOMMERCE_URL}/cart`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await goApiFetch("/cart");
       if (!res.ok) return;
       const data = await res.json();
       setItems(data.items ?? []);

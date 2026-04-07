@@ -22,8 +22,8 @@ export async function goApiFetch(
     headers,
   });
 
-  // Retry once on 403 with a refreshed token
-  if (res.status === 403) {
+  // Retry once on 401/403 with a refreshed token
+  if (res.status === 401 || res.status === 403) {
     const newToken = await refreshGoAccessToken();
     if (newToken) {
       headers.set("Authorization", `Bearer ${newToken}`);
