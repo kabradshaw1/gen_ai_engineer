@@ -1,5 +1,6 @@
 import { GoAuthProvider } from "@/components/go/GoAuthProvider";
 import { GoCartProvider } from "@/components/go/GoCartProvider";
+import { GoStoreProvider } from "@/components/go/GoStoreProvider";
 import { GoSubHeader } from "@/components/go/GoSubHeader";
 
 export default function GoLayout({
@@ -10,8 +11,10 @@ export default function GoLayout({
   return (
     <GoAuthProvider>
       <GoCartProvider>
-        <GoSubHeader />
-        {children}
+        <GoStoreProvider>
+          <GoSubHeader />
+          {children}
+        </GoStoreProvider>
       </GoCartProvider>
     </GoAuthProvider>
   );
