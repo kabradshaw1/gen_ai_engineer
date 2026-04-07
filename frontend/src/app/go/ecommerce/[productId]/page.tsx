@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useGoAuth } from "@/components/go/GoAuthProvider";
 import { useGoCart } from "@/components/go/GoCartProvider";
@@ -30,6 +32,7 @@ export default function ProductDetailPage() {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     fetch(`${GO_ECOMMERCE_URL}/products/${params.productId}`)
@@ -52,7 +55,7 @@ export default function ProductDetailPage() {
     try {
       const res = await goApiFetch("/cart", {
         method: "POST",
-        body: JSON.stringify({ productId: product.id, quantity: 1 }),
+        body: JSON.stringify({ productId: product.id, quantity }),
       });
       if (res.ok) {
         setAdded(true);
@@ -78,7 +81,14 @@ export default function ProductDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <div className="grid gap-8 md:grid-cols-2">
+      <Link
+        href="/go/ecommerce"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="size-4" />
+        Back to store
+      </Link>
+      <div className="mt-6 grid gap-8 md:grid-cols-2">
         <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
           {product.imageUrl ? (
             <img
@@ -109,13 +119,40 @@ export default function ProductDetailPage() {
           </p>
 
           {product.stock > 0 && (
-            <button
-              onClick={addToCart}
-              disabled={adding}
-              className="mt-6 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              {added ? "Added!" : adding ? "Adding..." : "Add to Cart"}
-            </button>
+            <div className="mt-6 flex items-center gap-3">
+              <div className="flex items-center rounded-lg border border-foreground/20">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1 || adding}
+                  className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30"
+                  aria-label="Decrease quantity"
+                >
+                  −
+                </button>
+                <span className="min-w-8 text-center text-sm font-medium">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuantity((q) => Math.min(product.stock, q + 1))
+                  }
+                  disabled={quantity >= product.stock || adding}
+                  className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+              <button
+                onClick={addToCart}
+                disabled={adding}
+                className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {added ? "Added!" : adding ? "Adding..." : "Add to Cart"}
+              </button>
+            </div>
           )}
           {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
         </div>
