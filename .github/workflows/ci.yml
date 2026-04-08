@@ -519,16 +519,20 @@ jobs:
             echo "Running Go migration Jobs..."
             # Jobs are immutable; delete before re-applying so they re-run on every deploy.
             $SSH "kubectl delete job go-auth-migrate go-ecommerce-migrate -n go-ecommerce --ignore-not-found --wait=true"
-            $SSH "kubectl apply -f -" < go/k8s/jobs/auth-service-migrate.yml
-            $SSH "kubectl apply -f -" < go/k8s/jobs/ecommerce-service-migrate.yml
 
-            # Wait for both Jobs to complete. Timeout is intentionally longer than
-            # the Jobs' own activeDeadlineSeconds (120s) so a Job that hits its own
-            # deadline surfaces as a Job failure with logs, not as a racing
-            # kubectl-wait timeout. If either fails, dump logs and fail the deploy.
-            if ! $SSH "kubectl wait --for=condition=complete --timeout=180s job/go-auth-migrate job/go-ecommerce-migrate -n go-ecommerce"; then
-              echo "Migration Job failed. Logs follow:"
+            # auth-migrate MUST run before ecommerce-migrate: both services share
+            # ecommercedb, and the ecommerce seed inserts into the users table
+            # which is created by auth-service's migrations.
+            $SSH "kubectl apply -f -" < go/k8s/jobs/auth-service-migrate.yml
+            if ! $SSH "kubectl wait --for=condition=complete --timeout=180s job/go-auth-migrate -n go-ecommerce"; then
+              echo "go-auth-migrate failed. Logs follow:"
               $SSH "kubectl logs job/go-auth-migrate -n go-ecommerce --tail=200" || true
+              exit 1
+            fi
+
+            $SSH "kubectl apply -f -" < go/k8s/jobs/ecommerce-service-migrate.yml
+            if ! $SSH "kubectl wait --for=condition=complete --timeout=180s job/go-ecommerce-migrate -n go-ecommerce"; then
+              echo "go-ecommerce-migrate failed. Logs follow:"
               $SSH "kubectl logs job/go-ecommerce-migrate -n go-ecommerce --tail=200" || true
               exit 1
             fi
