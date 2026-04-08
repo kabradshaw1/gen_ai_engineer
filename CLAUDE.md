@@ -73,6 +73,7 @@ If frontend code adds a new `NEXT_PUBLIC_*` env var with a `localhost` fallback,
 - **Java services:** schema is owned by Spring/JPA at service startup. No separate migration step.
 - **Python AI services:** no relational schema (Qdrant is schemaless).
 - **`postgres-initdb` ConfigMap:** only creates the `ecommercedb` database on first boot of a fresh PVC. It does NOT own any schemas — those are owned by the per-service migration Jobs.
+- **`sslmode=disable` is required on Go `DATABASE_URL`s.** The shared postgres has no SSL. `pgxpool` (used by the services) defaults to `sslmode=prefer` so it works either way, but `golang-migrate`'s `pq` driver defaults to `sslmode=require` and will fail with `pq: SSL is not enabled on the server`. Always include `?sslmode=disable` in the connection string.
 
 ## Project Structure
 
