@@ -35,9 +35,35 @@ Portfolio project for a Gen AI Engineer job application — demonstrating RAG ar
 - **Frontend:** `npm run dev` in `frontend/`, points to `localhost:8000` via tunnel
 - **Production:** Frontend on Vercel (`https://kylebradshaw.dev`), backend via Cloudflare Tunnel:
   - `https://api.kylebradshaw.dev` → Windows PC localhost:80 (Minikube Ingress)
-  - Ingress routes by path: `/ingestion/*`, `/chat/*`, `/debug/*` → Python services; `/graphql`, `/api/auth/*` → Java services; `/go/*` → Go services; `/grafana/*` → monitoring
+  - Ingress routes by path: `/ingestion/*`, `/chat/*`, `/debug/*` → Python services; `/graphql`, `/api/auth/*` → Java services; `/go-api/*`, `/go-auth/*` → Go services; `/grafana/*` → monitoring
   - Cloudflared installed as Windows service (auto-starts on boot)
   - `minikube tunnel` must be running as background process
+
+### Vercel CLI
+
+The Vercel CLI is installed and `frontend/.vercel/` is linked to the `frontend` project under team `kabradshaw1s-projects`. Claude can manage env vars and trigger redeploys directly from the Mac.
+
+```bash
+# List production env vars
+cd frontend && vercel env ls production
+
+# Add a new public env var (NEXT_PUBLIC_*) to production
+printf 'https://api.kylebradshaw.dev/go-api' | vercel env add NEXT_PUBLIC_GO_ECOMMERCE_URL production
+
+# Redeploy the latest production deployment so new env vars take effect
+# (env var changes require a rebuild — they don't apply to existing deployments)
+vercel switch kabradshaw1s-projects
+LATEST=$(vercel ls --prod 2>&1 | awk '/Production/ {print $4; exit}')
+vercel redeploy "$LATEST" --target production
+```
+
+Frontend env vars currently set in Vercel production:
+- `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_GATEWAY_URL` — Java gateway
+- `NEXT_PUBLIC_INGESTION_API_URL`, `NEXT_PUBLIC_CHAT_API_URL` — Python AI services
+- `NEXT_PUBLIC_GO_AUTH_URL=https://api.kylebradshaw.dev/go-auth`
+- `NEXT_PUBLIC_GO_ECOMMERCE_URL=https://api.kylebradshaw.dev/go-api`
+
+If frontend code adds a new `NEXT_PUBLIC_*` env var with a `localhost` fallback, **Vercel will silently bake the localhost fallback into the production bundle** unless the env var is added in Vercel and a redeploy is triggered. Always add the var to Vercel before merging.
 
 ## Project Structure
 
