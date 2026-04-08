@@ -10,8 +10,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /ecommerce-service ./cmd/server
 
 FROM alpine:3.19
 
-RUN apk add --no-cache postgresql-client
-RUN adduser -D -u 1001 appuser
+# postgresql-client is not pinned because Alpine's rolling repos rotate
+# available versions; locking one breaks rebuilds when Alpine updates.
+# hadolint ignore=DL3018
+RUN apk add --no-cache postgresql-client \
+    && adduser -D -u 1001 appuser
 
 COPY --from=builder /ecommerce-service /ecommerce-service
 COPY --from=migrate /usr/local/bin/migrate /usr/local/bin/migrate
