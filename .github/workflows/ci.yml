@@ -500,7 +500,7 @@ jobs:
           for f in $(find k8s/ai-services -name '*.yml' -not -name 'namespace.yml'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
           for f in $(find java/k8s -name '*.yml' -not -name 'namespace.yml' -not -path '*/secrets/*'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
           for f in $(find k8s/monitoring -name '*.yml' -not -name 'namespace.yml'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
-          for f in $(find go/k8s -name '*.yml' -not -name 'namespace.yml' -not -path '*/secrets/*'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
+          for f in $(find go/k8s -name '*.yml' -not -name 'namespace.yml' -not -path '*/secrets/*' -not -path '*/jobs/*'); do echo '---'; cat "$f"; done | $SSH "kubectl apply -f -"
 
           # Only restart deployments that have new images
           if [ "$PYTHON_CHANGED" = "true" ] || [ "$K8S_CHANGED" = "true" ]; then
@@ -516,7 +516,21 @@ jobs:
           fi
 
           if [ "$GO_CHANGED" = "true" ] || [ "$K8S_CHANGED" = "true" ]; then
-            echo "Restarting go-ecommerce..."
+            echo "Running Go migration Jobs..."
+            # Jobs are immutable; delete before re-applying so they re-run on every deploy.
+            $SSH "kubectl delete job go-auth-migrate go-ecommerce-migrate -n go-ecommerce --ignore-not-found --wait=true"
+            $SSH "kubectl apply -f -" < go/k8s/jobs/auth-service-migrate.yml
+            $SSH "kubectl apply -f -" < go/k8s/jobs/ecommerce-service-migrate.yml
+
+            # Wait for both Jobs to complete. If either fails, dump logs and fail the deploy.
+            if ! $SSH "kubectl wait --for=condition=complete --timeout=120s job/go-auth-migrate job/go-ecommerce-migrate -n go-ecommerce"; then
+              echo "Migration Job failed. Logs follow:"
+              $SSH "kubectl logs job/go-auth-migrate -n go-ecommerce" || true
+              $SSH "kubectl logs job/go-ecommerce-migrate -n go-ecommerce" || true
+              exit 1
+            fi
+
+            echo "Restarting go-ecommerce deployments..."
             $SSH "kubectl rollout restart deployment -n go-ecommerce"
             $SSH "kubectl rollout status deployment -n go-ecommerce --timeout=180s"
           fi
