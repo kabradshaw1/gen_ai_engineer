@@ -4,6 +4,6 @@ metadata:
   name: auth-service-config
   namespace: go-ecommerce
 data:
-  DATABASE_URL: postgres://taskuser:taskpass@postgres.java-tasks.svc.cluster.local:5432/ecommercedb
+  DATABASE_URL: postgres://taskuser:taskpass@postgres.java-tasks.svc.cluster.local:5432/ecommercedb?sslmode=disable
   ALLOWED_ORIGINS: http://localhost:3000,https://kylebradshaw.dev
   PORT: "8091"
