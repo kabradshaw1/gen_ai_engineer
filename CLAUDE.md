@@ -65,6 +65,15 @@ Frontend env vars currently set in Vercel production:
 
 If frontend code adds a new `NEXT_PUBLIC_*` env var with a `localhost` fallback, **Vercel will silently bake the localhost fallback into the production bundle** unless the env var is added in Vercel and a redeploy is triggered. Always add the var to Vercel before merging.
 
+### Migrations
+
+- **Go services (`go/auth-service`, `go/ecommerce-service`):** schema changes use `golang-migrate`. Migration files live in `go/<service>/migrations/` and use the strict `NNN_name.up.sql` / `NNN_name.down.sql` pair format. The `migrate` binary is baked into each service image; a Kubernetes `Job` per service (`go/k8s/jobs/*-migrate.yml`) runs `migrate up` on every deploy before the deployments are rolled.
+- **To add a schema change:** create a new `NNN_name.up.sql` + matching `.down.sql` in the right `migrations/` directory. Commit. The next deploy runs it automatically.
+- **Seed data (ecommerce only):** lives in `go/ecommerce-service/seed.sql`, applied by the ecommerce Job after `migrate up`. Must be idempotent (guard every INSERT with `WHERE NOT EXISTS`).
+- **Java services:** schema is owned by Spring/JPA at service startup. No separate migration step.
+- **Python AI services:** no relational schema (Qdrant is schemaless).
+- **`postgres-initdb` ConfigMap:** only creates the `ecommercedb` database on first boot of a fresh PVC. It does NOT own any schemas — those are owned by the per-service migration Jobs.
+
 ## Project Structure
 
 ```
