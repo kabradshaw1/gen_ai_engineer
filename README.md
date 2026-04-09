@@ -63,6 +63,12 @@ Next.js + TypeScript + shadcn/ui + Apollo Client, deployed on Vercel. Sections f
 
 ---
 
+## Security
+
+For a full security assessment of the controls implemented in this project — shift-left CI gates, Kubernetes policy-as-code, auth architecture, supply chain posture, and explicitly accepted risks — see **[`docs/security/security-assessment.md`](docs/security/security-assessment.md)**. Each finding cites the exact file(s) that implement it so the claims can be independently verified.
+
+---
+
 ## Tech stack
 
 | Layer | Tools |
