@@ -56,7 +56,7 @@ export default function AISection() {
           <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
             Prometheus scrapes every AI service and streams metrics to a live{" "}
             <a
-              href="https://api.kylebradshaw.dev/grafana/"
+              href="https://grafana.kylebradshaw.dev/d/system-overview/system-overview?orgId=1&from=now-1h&to=now&timezone=browser"
               target="_blank"
               rel="noopener noreferrer"
               className="underline hover:text-foreground transition-colors"

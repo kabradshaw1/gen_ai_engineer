@@ -36,7 +36,7 @@ export function SiteHeader() {
         </div>
         <div className="flex items-center gap-5">
           <a
-            href="https://api.kylebradshaw.dev/grafana/"
+            href="https://grafana.kylebradshaw.dev/d/system-overview/system-overview?orgId=1&from=now-1h&to=now&timezone=browser"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
