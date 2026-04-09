@@ -70,5 +70,19 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  ai-service:
+    build: ./ai-service
+    ports:
+      - "8093:8093"
+    environment:
+      PORT: "8093"
+      OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: "qwen2.5:14b"
+      ECOMMERCE_URL: http://ecommerce-service:8092
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - ecommerce-service
+
 volumes:
   go-pgdata:

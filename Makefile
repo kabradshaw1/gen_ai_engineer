@@ -1,4 +1,4 @@
-.PHONY: preflight preflight-python preflight-frontend preflight-e2e preflight-java preflight-java-integration preflight-go preflight-security
+.PHONY: preflight preflight-python preflight-frontend preflight-e2e preflight-java preflight-java-integration preflight-go preflight-security preflight-ai-service
 
 # Run all CI checks locally before pushing
 preflight: preflight-python preflight-frontend preflight-security preflight-java preflight-go
@@ -48,9 +48,17 @@ preflight-go:
 	@echo "\n=== Go: linting ==="
 	cd go/auth-service && golangci-lint run ./...
 	cd go/ecommerce-service && golangci-lint run ./...
+	cd go/ai-service && golangci-lint run ./...
 	@echo "\n=== Go: tests ==="
 	cd go/auth-service && go test ./... -v -race
 	cd go/ecommerce-service && go test ./... -v -race
+	cd go/ai-service && go test ./... -v -race
+
+preflight-ai-service:
+	@echo "\n=== ai-service: lint ==="
+	cd go/ai-service && go vet ./...
+	@echo "\n=== ai-service: tests ==="
+	cd go/ai-service && go test ./... -count=1
 
 # --- Security scans ---
 preflight-security:
