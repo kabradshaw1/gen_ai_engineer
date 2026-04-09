@@ -27,7 +27,9 @@ export function MermaidDiagram({ chart }: { chart: string }) {
     mermaid.render(id, chart).then(({ svg }) => {
       if (ref.current) {
         const clean = DOMPurify.sanitize(svg, {
-          USE_PROFILES: { svg: true, svgFilters: true },
+          USE_PROFILES: { svg: true, svgFilters: true, html: true },
+          ADD_TAGS: ["foreignObject"],
+          ADD_ATTR: ["xmlns"],
         });
         ref.current.innerHTML = clean;
       }
