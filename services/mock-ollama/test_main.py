@@ -4,6 +4,31 @@ from main import app
 client = TestClient(app)
 
 
+def test_embed_batch_returns_one_vector_per_input():
+    resp = client.post(
+        "/api/embed",
+        json={"model": "nomic-embed-text", "input": ["hello", "world", "third"]},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "embeddings" in body
+    assert len(body["embeddings"]) == 3
+    for vec in body["embeddings"]:
+        assert len(vec) == 768
+        assert all(isinstance(x, float) for x in vec)
+
+
+def test_embed_accepts_single_string_input():
+    resp = client.post(
+        "/api/embed",
+        json={"model": "nomic-embed-text", "input": "hello"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body["embeddings"]) == 1
+    assert len(body["embeddings"][0]) == 768
+
+
 def test_embeddings_returns_fixed_768_vector():
     resp = client.post(
         "/api/embeddings",

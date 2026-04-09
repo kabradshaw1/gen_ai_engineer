@@ -128,13 +128,17 @@ jobs:
         run: |
           psql -h localhost -U taskuser -d taskdb -c "CREATE DATABASE ecommercedb;"
 
+      # Per-service x-migrations-table matches go/k8s/jobs/*.yml exactly.
+      # Without this, both services share the default schema_migrations table
+      # and whichever runs first claims the version counter, causing the other
+      # to skip migrations and fail on table references. See commit 25054f5.
       - name: Run auth-service migrations
         run: |
-          migrate -path go/auth-service/migrations -database "$DATABASE_URL" up
+          migrate -path go/auth-service/migrations -database "${DATABASE_URL}&x-migrations-table=auth_schema_migrations" up
 
       - name: Run ecommerce-service migrations
         run: |
-          migrate -path go/ecommerce-service/migrations -database "$DATABASE_URL" up
+          migrate -path go/ecommerce-service/migrations -database "${DATABASE_URL}&x-migrations-table=ecommerce_schema_migrations" up
 
       - name: Apply ecommerce seed data
         run: |

@@ -1,7 +1,11 @@
 """Mock Ollama server for CI.
 
-Stubs the three endpoints the Python AI services actually call:
-- POST /api/embeddings  — returns a fixed 768-dim vector (nomic-embed-text).
+Stubs the endpoints the Python AI services actually call:
+- POST /api/embed       — batch API: {model, input: [list]} → {embeddings: [[...]]}.
+                          This is what services/ingestion/app/embedder.py, chat, and
+                          debug use.
+- POST /api/embeddings  — legacy singular API: {model, prompt} → {embedding: [...]}.
+                          Kept for completeness; not currently used by the services.
 - POST /api/chat        — returns a two-chunk NDJSON stream ending with done.
 - GET  /api/tags        — returns an empty model list (used by health check).
 
@@ -25,6 +29,25 @@ app = FastAPI(title="mock-ollama")
 EMBEDDING_DIM = 768
 
 
+def _deterministic_vector(text: str) -> list[float]:
+    """Return a reproducible EMBEDDING_DIM-length vector derived from text."""
+    seed = sum(ord(c) for c in text) or 1
+    return [((seed * (i + 1)) % 2000 - 1000) / 1000.0 for i in range(EMBEDDING_DIM)]
+
+
+class EmbedRequest(BaseModel):
+    model: str
+    # Ollama's /api/embed accepts either a string or list of strings.
+    input: str | list[str]
+
+
+@app.post("/api/embed")
+def embed(req: EmbedRequest) -> dict:
+    """Batch embed endpoint used by ingestion/chat/debug."""
+    texts = [req.input] if isinstance(req.input, str) else req.input
+    return {"embeddings": [_deterministic_vector(t) for t in texts]}
+
+
 class EmbeddingsRequest(BaseModel):
     model: str
     prompt: str
@@ -32,9 +55,8 @@ class EmbeddingsRequest(BaseModel):
 
 @app.post("/api/embeddings")
 def embeddings(req: EmbeddingsRequest) -> dict:
-    seed = sum(ord(c) for c in req.prompt) or 1
-    vector = [((seed * (i + 1)) % 2000 - 1000) / 1000.0 for i in range(EMBEDDING_DIM)]
-    return {"embedding": vector}
+    """Legacy singular embed endpoint. Not currently used by services."""
+    return {"embedding": _deterministic_vector(req.prompt)}
 
 
 class ChatMessage(BaseModel):
