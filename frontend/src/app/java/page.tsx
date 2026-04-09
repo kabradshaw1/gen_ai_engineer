@@ -47,6 +47,15 @@ export default function JavaPage() {
           <li>Minikube Kubernetes deployment (production), Docker Compose (local dev)</li>
           <li>CI/CD with GitHub Actions, Testcontainers, security scanning</li>
         </ul>
+
+        <h3 className="mt-6 text-lg font-medium">Analytics & Database Optimization</h3>
+        <p className="mt-2 text-muted-foreground leading-relaxed">
+          The task-service exposes an analytics query layer backed by Flyway
+          migrations, compound and partial indexes, Redis caching, HikariCP tuning,
+          and MongoDB aggregation pipelines in the activity-service. The GraphQL
+          gateway composes these into a single <code>projectHealth</code> query
+          (see ADR <code>docs/adr/java-task-management/07_analytics_and_optimization.md</code>).
+        </p>
       </section>
 
       <section className="mt-12">
@@ -121,12 +130,18 @@ export default function JavaPage() {
   </div>
 </section>
 
-      <section className="mt-12">
+      <section className="mt-12 flex flex-wrap gap-3">
         <Link
           href="/java/tasks"
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           Open Task Manager &rarr;
+        </Link>
+        <Link
+          href="/java/dashboard"
+          className="inline-flex items-center gap-2 rounded-lg border px-6 py-3 text-sm font-medium hover:bg-accent transition-colors"
+        >
+          View Analytics Dashboard &rarr;
         </Link>
       </section>
     </div>
