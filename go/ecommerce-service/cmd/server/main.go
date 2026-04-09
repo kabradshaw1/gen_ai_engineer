@@ -120,6 +120,10 @@ func main() {
 	cartSvc := service.NewCartService(cartRepo)
 	orderSvc := service.NewOrderService(orderRepo, cartRepo, publisher)
 
+	returnRepo := repository.NewReturnRepository(pool)
+	returnSvc := service.NewReturnService(returnRepo, orderSvc)
+	returnHandler := handler.NewReturnHandler(returnSvc)
+
 	productHandler := handler.NewProductHandler(productSvc)
 	cartHandler := handler.NewCartHandler(cartSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
@@ -159,6 +163,7 @@ func main() {
 		auth.POST("/orders", orderHandler.Checkout)
 		auth.GET("/orders", orderHandler.List)
 		auth.GET("/orders/:id", orderHandler.GetByID)
+		auth.POST("/orders/:id/returns", returnHandler.Initiate)
 	}
 
 	// Start server
