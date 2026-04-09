@@ -176,4 +176,6 @@ All jobs run on every push. Security + E2E jobs gate deployment.
 **Deploy:** GHCR images built in CI → SSH to Windows PC → `docker compose pull && up -d`
 **Separate CI workflows:** `ci.yml` (Python + frontend + security), `java-ci.yml`, `go-ci.yml`
 
+**Compose-smoke realism:** Job 3 (`compose-smoke`) runs the Python AI stack via `docker-compose.yml` with a mocked Ollama. Any change to Python service configuration (env vars, ports, depends_on, env_file references) must be reflected in BOTH `docker-compose.yml` and the corresponding k8s manifests under `k8s/ai-services/`, or compose-smoke will drift from prod and stop catching real regressions.
+
 **Tailscale authkey:** Expires every 90 days (free plan). Regenerate at Tailscale admin → Keys and update `TAILSCALE_AUTHKEY` in GitHub repo secrets.
