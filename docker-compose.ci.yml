@@ -1,0 +1,45 @@
+# CI overlay: adds a mock Ollama service and points Python AI services at
+# it instead of the real Ollama on host.docker.internal. Use with:
+#   docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --build
+#
+# The empty .env required by the base compose file must be created by the
+# caller before running `docker compose up`. The CI job does that explicitly.
+
+services:
+  mock-ollama:
+    build:
+      context: ./services/mock-ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:11434/health\")'"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ingestion:
+    environment:
+      OLLAMA_BASE_URL: http://mock-ollama:11434
+    depends_on:
+      mock-ollama:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+  chat:
+    environment:
+      OLLAMA_BASE_URL: http://mock-ollama:11434
+    depends_on:
+      mock-ollama:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+  debug:
+    environment:
+      OLLAMA_BASE_URL: http://mock-ollama:11434
+    depends_on:
+      mock-ollama:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy

@@ -29,11 +29,20 @@ test.describe("Production smoke tests", () => {
     expect(ingestionData.status).toBe("healthy");
   });
 
+  test("grafana dashboard is reachable", async ({ request }) => {
+    const grafanaUrl =
+      process.env.SMOKE_GRAFANA_URL || "https://grafana.kylebradshaw.dev";
+    const res = await request.get(`${grafanaUrl}/api/health`);
+    expect(res.ok(), "grafana /api/health should return 2xx").toBeTruthy();
+    const body = await res.json();
+    expect(body.database).toBe("ok");
+  });
+
   test("full E2E flow with cleanup", async ({ request }) => {
     const testCollection = "e2e-test";
 
     // Step 1: Upload test PDF to dedicated collection
-    const pdfPath = path.join(__dirname, "fixtures", "test.pdf");
+    const pdfPath = path.join(__dirname, "..", "fixtures", "test.pdf");
     const fs = await import("fs");
     const pdfBuffer = fs.readFileSync(pdfPath);
 
