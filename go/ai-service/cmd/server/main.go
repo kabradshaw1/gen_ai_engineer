@@ -11,8 +11,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/agent"
+	"github.com/kabradshaw1/portfolio/go/ai-service/internal/cache"
+	"github.com/kabradshaw1/portfolio/go/ai-service/internal/guardrails"
 	apphttp "github.com/kabradshaw1/portfolio/go/ai-service/internal/http"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/llm"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/metrics"
@@ -25,6 +28,7 @@ func main() {
 	ollamaURL := getenv("OLLAMA_URL", "http://ollama:11434")
 	ollamaModel := getenv("OLLAMA_MODEL", "qwen2.5:14b")
 	ecommerceURL := getenv("ECOMMERCE_URL", "http://ecommerce-service:8092")
+	redisURL := getenv("REDIS_URL", "")
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
@@ -36,12 +40,32 @@ func main() {
 
 	// Tool registry
 	ecomClient := clients.NewEcommerceClient(ecommerceURL)
+
+	var toolCache cache.Cache = cache.NopCache{}
+	var limiter *guardrails.Limiter
+	if redisURL != "" {
+		opts, err := redis.ParseURL(redisURL)
+		if err != nil {
+			log.Fatalf("bad REDIS_URL: %v", err)
+		}
+		rc := redis.NewClient(opts)
+		pingCtx, cancelPing := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancelPing()
+		if err := rc.Ping(pingCtx).Err(); err != nil {
+			slog.Warn("redis unreachable, caching + rate limit disabled", "error", err)
+		} else {
+			toolCache = cache.NewRedisCache(rc, "ai")
+			limiter = guardrails.NewLimiter(rc, 20, time.Minute)
+			slog.Info("redis connected, caching + rate limit enabled")
+		}
+	}
+
 	registry := tools.NewMemRegistry()
-	registry.Register(tools.NewSearchProductsTool(ecomClient))
-	registry.Register(tools.NewGetProductTool(ecomClient))
-	registry.Register(tools.NewCheckInventoryTool(ecomClient))
-	registry.Register(tools.NewListOrdersTool(ecomClient))
-	registry.Register(tools.NewGetOrderTool(ecomClient))
+	registry.Register(tools.Cached(tools.NewSearchProductsTool(ecomClient), toolCache, 60*time.Second))
+	registry.Register(tools.Cached(tools.NewGetProductTool(ecomClient), toolCache, 60*time.Second))
+	registry.Register(tools.Cached(tools.NewCheckInventoryTool(ecomClient), toolCache, 10*time.Second))
+	registry.Register(tools.Cached(tools.NewListOrdersTool(ecomClient), toolCache, 10*time.Second))
+	registry.Register(tools.Cached(tools.NewGetOrderTool(ecomClient), toolCache, 10*time.Second))
 	registry.Register(tools.NewSummarizeOrdersTool(ecomClient, llmc))
 	registry.Register(tools.NewViewCartTool(ecomClient))
 	registry.Register(tools.NewAddToCartTool(ecomClient))
@@ -76,7 +100,7 @@ func main() {
 			return nil
 		},
 	})
-	apphttp.RegisterChatRoutes(router, a, jwtSecret, nil)
+	apphttp.RegisterChatRoutes(router, a, jwtSecret, limiter)
 	apphttp.RegisterMetricsRoute(router)
 
 	srv := &http.Server{Addr: ":" + port, Handler: router}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/cache"
+	"github.com/kabradshaw1/portfolio/go/ai-service/internal/metrics"
 )
 
 // Cached returns a Tool that wraps inner with a response cache.
@@ -34,11 +35,13 @@ func (t *cachedTool) Call(ctx context.Context, args json.RawMessage, userID stri
 		if raw, ok, _ := t.cache.Get(ctx, key); ok {
 			var content any
 			if json.Unmarshal(raw, &content) == nil {
+				metrics.CacheEvents.WithLabelValues("tool", "hit").Inc()
 				return Result{Content: content}, nil
 			}
 		}
 	}
 
+	metrics.CacheEvents.WithLabelValues("tool", "miss").Inc()
 	res, callErr := t.inner.Call(ctx, args, userID)
 	if callErr != nil {
 		return res, callErr
