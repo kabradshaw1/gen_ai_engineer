@@ -26,7 +26,10 @@ export function MermaidDiagram({ chart }: { chart: string }) {
     const id = `mermaid-${reactId.replace(/:/g, "")}-${counter++}`;
     mermaid.render(id, chart).then(({ svg }) => {
       if (ref.current) {
-        ref.current.innerHTML = DOMPurify.sanitize(svg);
+        const clean = DOMPurify.sanitize(svg, {
+          USE_PROFILES: { svg: true, svgFilters: true },
+        });
+        ref.current.innerHTML = clean;
       }
     });
   }, [chart, reactId]);
