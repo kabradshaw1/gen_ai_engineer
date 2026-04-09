@@ -2,11 +2,14 @@
 
 Stubs the endpoints the Python AI services actually call:
 - POST /api/embed       — batch API: {model, input: [list]} → {embeddings: [[...]]}.
-                          This is what services/ingestion/app/embedder.py, chat, and
-                          debug use.
+                          Used by ingestion, chat, and debug embed calls.
 - POST /api/embeddings  — legacy singular API: {model, prompt} → {embedding: [...]}.
                           Kept for completeness; not currently used by the services.
-- POST /api/chat        — returns a two-chunk NDJSON stream ending with done.
+- POST /api/generate    — NDJSON stream with {response, done}. Used by
+                          services/chat/app/chain.py:stream_ollama_response.
+- POST /api/chat        — NDJSON stream with {message:{role,content}, done}. Used
+                          by services/debug/app/agent.py (non-streaming via the
+                          debug agent loop, but exposed here for completeness).
 - GET  /api/tags        — returns an empty model list (used by health check).
 
 The real Ollama response schemas are pinned here verbatim so a future
@@ -59,6 +62,32 @@ def embeddings(req: EmbeddingsRequest) -> dict:
     return {"embedding": _deterministic_vector(req.prompt)}
 
 
+class GenerateRequest(BaseModel):
+    model: str
+    prompt: str
+    system: str | None = None
+    stream: bool = True
+
+
+def _generate_stream() -> bytes:
+    # NDJSON stream used by services/chat/app/chain.py — reads
+    # data["response"] per line and breaks when data["done"] is true.
+    chunks = [
+        {"response": "This is ", "done": False},
+        {"response": "a mock response.", "done": False},
+        {"response": "", "done": True},
+    ]
+    return ("\n".join(json.dumps(c) for c in chunks) + "\n").encode()
+
+
+@app.post("/api/generate")
+def generate(_req: GenerateRequest) -> StreamingResponse:
+    return StreamingResponse(
+        iter([_generate_stream()]),
+        media_type="application/x-ndjson",
+    )
+
+
 class ChatMessage(BaseModel):
     role: str
     content: str
@@ -83,7 +112,18 @@ def _chat_stream() -> bytes:
 
 
 @app.post("/api/chat")
-def chat(_req: ChatRequest) -> StreamingResponse:
+def chat(req: ChatRequest):
+    # Real Ollama returns a single JSON object when stream=false and an
+    # NDJSON stream when stream=true. Debug agent uses stream=false; chat
+    # service uses /api/generate instead. Handle both for parity.
+    if not req.stream:
+        return {
+            "message": {
+                "role": "assistant",
+                "content": "mock response",
+            },
+            "done": True,
+        }
     return StreamingResponse(
         iter([_chat_stream()]),
         media_type="application/x-ndjson",

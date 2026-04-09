@@ -42,6 +42,28 @@ def test_embeddings_returns_fixed_768_vector():
     assert all(isinstance(x, float) for x in body["embedding"])
 
 
+def test_generate_returns_ndjson_stream_with_response_key():
+    resp = client.post(
+        "/api/generate",
+        json={
+            "model": "qwen2.5:14b",
+            "prompt": "hi",
+            "system": "you are a test",
+            "stream": True,
+        },
+    )
+    assert resp.status_code == 200
+    lines = [line for line in resp.text.splitlines() if line.strip()]
+    assert len(lines) >= 2
+    import json
+
+    first = json.loads(lines[0])
+    assert "response" in first
+    assert first["done"] is False
+    last = json.loads(lines[-1])
+    assert last["done"] is True
+
+
 def test_chat_returns_ndjson_stream():
     resp = client.post(
         "/api/chat",
