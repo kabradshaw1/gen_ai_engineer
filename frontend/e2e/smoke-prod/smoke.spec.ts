@@ -42,7 +42,7 @@ test.describe("Production smoke tests", () => {
     const testCollection = "e2e-test";
 
     // Step 1: Upload test PDF to dedicated collection
-    const pdfPath = path.join(__dirname, "fixtures", "test.pdf");
+    const pdfPath = path.join(__dirname, "..", "fixtures", "test.pdf");
     const fs = await import("fs");
     const pdfBuffer = fs.readFileSync(pdfPath);
 

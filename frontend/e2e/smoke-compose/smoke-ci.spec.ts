@@ -23,7 +23,7 @@ test.describe("compose-smoke CI tests", () => {
     const collection = "ci-smoke";
 
     // 1. Upload the fixture PDF to a dedicated collection.
-    const pdfPath = path.join(__dirname, "fixtures", "test.pdf");
+    const pdfPath = path.join(__dirname, "..", "fixtures", "test.pdf");
     const fs = await import("fs");
     const pdfBuffer = fs.readFileSync(pdfPath);
 

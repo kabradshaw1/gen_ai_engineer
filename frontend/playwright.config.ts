@@ -1,8 +1,11 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./e2e",
-  testIgnore: ["**/smoke.spec.ts"],
+  // Default config runs only the mocked-backend tests. Runtime-specific
+  // suites live in sibling directories and are invoked by dedicated configs:
+  //   e2e/smoke-prod/    → playwright.smoke.config.ts    (smoke-production CI)
+  //   e2e/smoke-compose/ → playwright.smoke-ci.config.ts (compose-smoke CI)
+  testDir: "./e2e/mocked",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

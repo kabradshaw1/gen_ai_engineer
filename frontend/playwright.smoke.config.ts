@@ -1,8 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./e2e",
-  testMatch: "smoke.spec.ts",
+  testDir: "./e2e/smoke-prod",
   fullyParallel: false,
   retries: 1,
   workers: 1,

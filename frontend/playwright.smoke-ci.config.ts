@@ -5,8 +5,7 @@ import { defineConfig } from "@playwright/test";
 // docker-compose.yml. Pair with docker-compose.ci.yml which overrides
 // OLLAMA_BASE_URL to point at the mock-ollama stub.
 export default defineConfig({
-  testDir: "./e2e",
-  testMatch: "smoke-ci.spec.ts",
+  testDir: "./e2e/smoke-compose",
   fullyParallel: false,
   retries: 1,
   workers: 1,
