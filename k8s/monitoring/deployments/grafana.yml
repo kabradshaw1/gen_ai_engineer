@@ -20,15 +20,16 @@ spec:
             - containerPort: 3000
           env:
             - name: GF_SECURITY_ADMIN_PASSWORD
-              value: admin
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-secrets
+                  key: admin-password
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"
             - name: GF_AUTH_ANONYMOUS_ORG_ROLE
               value: Viewer
             - name: GF_SERVER_ROOT_URL
-              value: https://api.kylebradshaw.dev/grafana/
-            - name: GF_SERVER_SERVE_FROM_SUB_PATH
-              value: "true"
+              value: https://grafana.kylebradshaw.dev
           volumeMounts:
             - name: datasource
               mountPath: /etc/grafana/provisioning/datasources/prometheus.yml
@@ -36,6 +37,8 @@ spec:
             - name: dashboard-provider
               mountPath: /etc/grafana/provisioning/dashboards/dashboard.yml
               subPath: dashboard.yml
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
           resources:
             requests:
               memory: "128Mi"
@@ -56,3 +59,6 @@ spec:
         - name: dashboard-provider
           configMap:
             name: grafana-dashboard-provider
+        - name: dashboards
+          configMap:
+            name: grafana-dashboards

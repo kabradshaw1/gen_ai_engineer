@@ -6,9 +6,10 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - http:
+    - host: grafana.kylebradshaw.dev
+      http:
         paths:
-          - path: /grafana
+          - path: /
             pathType: Prefix
             backend:
               service:

@@ -29,6 +29,15 @@ test.describe("Production smoke tests", () => {
     expect(ingestionData.status).toBe("healthy");
   });
 
+  test("grafana dashboard is reachable", async ({ request }) => {
+    const grafanaUrl =
+      process.env.SMOKE_GRAFANA_URL || "https://grafana.kylebradshaw.dev";
+    const res = await request.get(`${grafanaUrl}/api/health`);
+    expect(res.ok(), "grafana /api/health should return 2xx").toBeTruthy();
+    const body = await res.json();
+    expect(body.database).toBe("ok");
+  });
+
   test("full E2E flow with cleanup", async ({ request }) => {
     const testCollection = "e2e-test";
 
