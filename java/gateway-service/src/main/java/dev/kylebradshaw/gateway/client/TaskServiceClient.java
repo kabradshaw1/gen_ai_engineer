@@ -111,10 +111,11 @@ public class TaskServiceClient {
     }
 
     public ProjectStatsDto getProjectStats(String projectId) {
-        return client.get()
+        ProjectStatsDto.Raw raw = client.get()
                 .uri("/analytics/projects/{id}/stats", projectId)
                 .retrieve()
-                .body(ProjectStatsDto.class);
+                .body(ProjectStatsDto.Raw.class);
+        return raw == null ? null : raw.toTyped();
     }
 
     public VelocityDto getProjectVelocity(String projectId, int weeks) {
