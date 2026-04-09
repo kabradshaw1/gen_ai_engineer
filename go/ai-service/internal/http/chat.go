@@ -1,0 +1,90 @@
+package http
+
+import (
+	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/kabradshaw1/portfolio/go/ai-service/internal/agent"
+	"github.com/kabradshaw1/portfolio/go/ai-service/internal/llm"
+)
+
+// Runner is the subset of *agent.Agent the HTTP handler needs.
+type Runner interface {
+	Run(ctx context.Context, turn agent.Turn, emit func(agent.Event)) error
+}
+
+type chatRequest struct {
+	Messages  []llm.Message `json:"messages"`
+	SessionID string        `json:"session_id,omitempty"`
+}
+
+const maxUserMessageBytes = 4000
+
+// RegisterChatRoutes wires POST /chat onto r.
+func RegisterChatRoutes(r *gin.Engine, runner Runner) {
+	r.POST("/chat", func(c *gin.Context) {
+		var req chatRequest
+		body, err := io.ReadAll(io.LimitReader(c.Request.Body, maxUserMessageBytes*4))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "read body"})
+			return
+		}
+		if err := json.Unmarshal(body, &req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			return
+		}
+		if len(req.Messages) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "messages required"})
+			return
+		}
+		for _, m := range req.Messages {
+			if m.Role == llm.RoleUser && len(m.Content) > maxUserMessageBytes {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "message too long"})
+				return
+			}
+		}
+
+		c.Writer.Header().Set("Content-Type", "text/event-stream")
+		c.Writer.Header().Set("Cache-Control", "no-cache")
+		c.Writer.Header().Set("Connection", "keep-alive")
+		c.Writer.Header().Set("X-Accel-Buffering", "no")
+		c.Writer.WriteHeader(http.StatusOK)
+		flusher, _ := c.Writer.(http.Flusher)
+
+		emit := func(e agent.Event) {
+			name, payload := eventName(e)
+			data, _ := json.Marshal(payload)
+			_, _ = c.Writer.WriteString("event: " + name + "\n")
+			_, _ = c.Writer.WriteString("data: " + string(data) + "\n\n")
+			if flusher != nil {
+				flusher.Flush()
+			}
+		}
+
+		turn := agent.Turn{UserID: "", Messages: req.Messages}
+		if err := runner.Run(c.Request.Context(), turn, emit); err != nil {
+			emit(agent.Event{Error: &agent.ErrorEvent{Reason: err.Error()}})
+		}
+	})
+}
+
+func eventName(e agent.Event) (string, any) {
+	switch {
+	case e.ToolCall != nil:
+		return "tool_call", e.ToolCall
+	case e.ToolResult != nil:
+		return "tool_result", e.ToolResult
+	case e.ToolError != nil:
+		return "tool_error", e.ToolError
+	case e.Final != nil:
+		return "final", e.Final
+	case e.Error != nil:
+		return "error", e.Error
+	default:
+		return "unknown", struct{}{}
+	}
+}
