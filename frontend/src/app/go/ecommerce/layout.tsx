@@ -1,4 +1,5 @@
 import { GoSubHeader } from "@/components/go/GoSubHeader";
+import { AiAssistantDrawer } from "@/components/go/AiAssistantDrawer";
 
 export default function GoEcommerceLayout({
   children,
@@ -9,6 +10,7 @@ export default function GoEcommerceLayout({
     <>
       <GoSubHeader />
       {children}
+      <AiAssistantDrawer />
     </>
   );
 }

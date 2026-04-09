@@ -1,0 +1,254 @@
+"use client";
+
+import { useCallback, useRef, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getGoAccessToken } from "@/lib/go-auth";
+import { sendChat, type AiEvent, type ChatMessage } from "@/lib/ai-service";
+
+import { AiToolCallCard, type ToolCallView } from "./AiToolCallCard";
+
+type DisplayItem =
+  | { kind: "user"; text: string }
+  | { kind: "assistant"; text: string }
+  | { kind: "tool"; call: ToolCallView };
+
+export function AiAssistantDrawer() {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [items, setItems] = useState<DisplayItem[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const appendItem = useCallback((item: DisplayItem) => {
+    setItems((prev) => [...prev, item]);
+  }, []);
+
+  const updateLastTool = useCallback(
+    (fn: (call: ToolCallView) => ToolCallView) => {
+      setItems((prev) => {
+        for (let i = prev.length - 1; i >= 0; i--) {
+          const it = prev[i];
+          if (it.kind === "tool" && it.call.status === "running") {
+            const next = [...prev];
+            next[i] = { kind: "tool", call: fn(it.call) };
+            return next;
+          }
+        }
+        return prev;
+      });
+    },
+    [],
+  );
+
+  const handleSend = useCallback(async () => {
+    const trimmed = input.trim();
+    if (!trimmed || busy) return;
+
+    const userMsg: ChatMessage = { role: "user", content: trimmed };
+    const nextMessages = [...messages, userMsg];
+    setMessages(nextMessages);
+    appendItem({ kind: "user", text: trimmed });
+    setInput("");
+    setBusy(true);
+    setErrorText(null);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const jwt = getGoAccessToken();
+      let idCounter = 0;
+      let assistantText = "";
+
+      for await (const ev of sendChat({
+        messages: nextMessages,
+        jwt,
+        signal: controller.signal,
+      })) {
+        handleEvent(
+          ev,
+          () => `tc-${idCounter++}`,
+          appendItem,
+          updateLastTool,
+          (text: string) => {
+            assistantText = text;
+            setItems((prev) => {
+              if (prev.length > 0 && prev[prev.length - 1].kind === "assistant") {
+                const next = [...prev];
+                next[next.length - 1] = { kind: "assistant", text };
+                return next;
+              }
+              return [...prev, { kind: "assistant", text }];
+            });
+          },
+          (reason: string) => setErrorText(reason),
+        );
+      }
+
+      if (assistantText) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: assistantText },
+        ]);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "unknown error";
+      setErrorText(msg);
+    } finally {
+      setBusy(false);
+      abortRef.current = null;
+    }
+  }, [appendItem, busy, input, messages, updateLastTool]);
+
+  const handleCancel = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
+  return (
+    <>
+      {!open && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          data-testid="ai-assistant-open"
+          className="fixed bottom-6 right-6 z-40 rounded-full bg-primary px-5 py-3 text-primary-foreground shadow-lg hover:opacity-90"
+        >
+          Ask AI
+        </button>
+      )}
+      {open && (
+        <aside
+          role="dialog"
+          aria-label="AI assistant"
+          data-testid="ai-assistant-drawer"
+          className="fixed bottom-0 right-0 top-0 z-50 flex w-full max-w-md flex-col border-l bg-background shadow-xl"
+        >
+          <header className="flex items-center justify-between border-b px-4 py-3">
+            <h2 className="text-base font-semibold">Shopping Assistant</h2>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              data-testid="ai-assistant-close"
+              className="text-sm text-muted-foreground hover:underline"
+            >
+              Close
+            </button>
+          </header>
+          <ScrollArea className="flex-1 px-4 py-3">
+            {items.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Try: &quot;find me a waterproof jacket under $150&quot; or
+                &quot;where&apos;s my last order?&quot;
+              </p>
+            )}
+            {items.map((it, i) => (
+              <div key={i} className="mb-3">
+                {it.kind === "user" && (
+                  <div className="ml-auto w-fit max-w-[85%] rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground">
+                    {it.text}
+                  </div>
+                )}
+                {it.kind === "assistant" && (
+                  <div
+                    data-testid="ai-assistant-final"
+                    className="mr-auto w-fit max-w-[90%] rounded-lg bg-muted px-3 py-2 text-sm"
+                  >
+                    {it.text}
+                  </div>
+                )}
+                {it.kind === "tool" && <AiToolCallCard call={it.call} />}
+              </div>
+            ))}
+            {errorText && (
+              <div
+                data-testid="ai-assistant-error"
+                className="mt-2 rounded border border-red-500 p-2 text-sm text-red-600"
+              >
+                {errorText}
+              </div>
+            )}
+          </ScrollArea>
+          <div className="border-t p-3">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask the shopping assistant…"
+              rows={2}
+              data-testid="ai-assistant-input"
+              disabled={busy}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void handleSend();
+                }
+              }}
+            />
+            <div className="mt-2 flex gap-2">
+              <Button
+                onClick={handleSend}
+                disabled={busy || input.trim().length === 0}
+                data-testid="ai-assistant-send"
+              >
+                {busy ? "Thinking…" : "Send"}
+              </Button>
+              {busy && (
+                <Button variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </div>
+        </aside>
+      )}
+    </>
+  );
+}
+
+function handleEvent(
+  ev: AiEvent,
+  nextId: () => string,
+  appendItem: (item: DisplayItem) => void,
+  updateLastTool: (fn: (call: ToolCallView) => ToolCallView) => void,
+  setAssistant: (text: string) => void,
+  setError: (reason: string) => void,
+) {
+  switch (ev.kind) {
+    case "tool_call": {
+      const id = nextId();
+      appendItem({
+        kind: "tool",
+        call: { id, name: ev.name, args: ev.args, status: "running" },
+      });
+      break;
+    }
+    case "tool_result": {
+      updateLastTool((call) =>
+        call.name === ev.name
+          ? { ...call, status: "success", display: ev.display }
+          : call,
+      );
+      break;
+    }
+    case "tool_error": {
+      updateLastTool((call) =>
+        call.name === ev.name
+          ? { ...call, status: "error", error: ev.error }
+          : call,
+      );
+      break;
+    }
+    case "final": {
+      setAssistant(ev.text);
+      break;
+    }
+    case "error": {
+      setError(ev.reason);
+      break;
+    }
+  }
+}
