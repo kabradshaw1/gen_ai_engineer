@@ -1,5 +1,3 @@
-import { ExternalLink } from "lucide-react";
-
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-foreground/10 bg-background">
@@ -10,18 +8,16 @@ export function SiteFooter() {
             href="https://github.com/kabradshaw1"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+            className="hover:text-foreground transition-colors"
           >
-            <ExternalLink className="size-4" />
             GitHub
           </a>
           <a
             href="https://www.linkedin.com/in/kyle-bradshaw-15950988/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+            className="hover:text-foreground transition-colors"
           >
-            <ExternalLink className="size-4" />
             LinkedIn
           </a>
         </nav>
