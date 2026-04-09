@@ -76,7 +76,7 @@ func main() {
 			return nil
 		},
 	})
-	apphttp.RegisterChatRoutes(router, a, jwtSecret)
+	apphttp.RegisterChatRoutes(router, a, jwtSecret, nil)
 	apphttp.RegisterMetricsRoute(router)
 
 	srv := &http.Server{Addr: ":" + port, Handler: router}

@@ -40,7 +40,7 @@ func TestChatHandler_StreamsEventsAsSSE(t *testing.T) {
 		{Final: &agent.FinalEvent{Text: "Here are some jackets."}},
 	}}
 	r := gin.New()
-	RegisterChatRoutes(r, runner, "")
+	RegisterChatRoutes(r, runner, "", nil)
 
 	body := strings.NewReader(`{"messages":[{"role":"user","content":"find a jacket"}]}`)
 	req := httptest.NewRequest(http.MethodPost, "/chat", body)
@@ -71,7 +71,7 @@ func TestChatHandler_StreamsEventsAsSSE(t *testing.T) {
 func TestChatHandler_BadBody(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	RegisterChatRoutes(r, &fakeRunner{}, "")
+	RegisterChatRoutes(r, &fakeRunner{}, "", nil)
 	req := httptest.NewRequest(http.MethodPost, "/chat", strings.NewReader(`not json`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -95,7 +95,7 @@ func TestChatHandler_AcceptsValidJWT(t *testing.T) {
 	}
 
 	r := gin.New()
-	RegisterChatRoutes(r, runner, secret)
+	RegisterChatRoutes(r, runner, secret, nil)
 	req := httptest.NewRequest(http.MethodPost, "/chat",
 		strings.NewReader(`{"messages":[{"role":"user","content":"hi"}]}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -117,7 +117,7 @@ func TestChatHandler_AcceptsValidJWT(t *testing.T) {
 func TestChatHandler_RejectsInvalidJWT(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	RegisterChatRoutes(r, &fakeRunner{}, "dev-secret-key-at-least-32-characters-long")
+	RegisterChatRoutes(r, &fakeRunner{}, "dev-secret-key-at-least-32-characters-long", nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/chat",
 		strings.NewReader(`{"messages":[{"role":"user","content":"hi"}]}`))

@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/kabradshaw1/portfolio/go/ai-service/internal/guardrails"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/llm"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/metrics"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/tools"
@@ -45,22 +48,44 @@ func (a *Agent) Run(ctx context.Context, turn Turn, emit func(Event)) error {
 	ctx, cancel := context.WithTimeout(ctx, a.timeout)
 	defer cancel()
 
+	turnID := uuid.NewString()
 	startTime := time.Now()
 	stepsCompleted := 0
-
+	turn.Messages = guardrails.TruncateHistory(turn.Messages, guardrails.DefaultMaxHistory)
 	messages := append([]llm.Message(nil), turn.Messages...)
+	var toolsCalled []string
 
 	for step := 0; step < a.maxSteps; step++ {
 		resp, err := a.llm.Chat(ctx, messages, a.registry.Schemas())
 		if err != nil {
 			emit(Event{Error: &ErrorEvent{Reason: err.Error()}})
 			a.rec.RecordTurn("error", stepsCompleted, time.Since(startTime))
+			slog.Info("agent turn",
+				"turn_id", turnID,
+				"user_id", turn.UserID,
+				"steps", stepsCompleted,
+				"tools_called", toolsCalled,
+				"duration_ms", time.Since(startTime).Milliseconds(),
+				"outcome", "error",
+			)
 			return fmt.Errorf("llm chat: %w", err)
 		}
 
 		if len(resp.ToolCalls) == 0 {
+			outcome := "final"
+			if guardrails.IsRefusal(resp.Content) {
+				outcome = "refused"
+			}
+			a.rec.RecordTurn(outcome, stepsCompleted+1, time.Since(startTime))
+			slog.Info("agent turn",
+				"turn_id", turnID,
+				"user_id", turn.UserID,
+				"steps", stepsCompleted+1,
+				"tools_called", toolsCalled,
+				"duration_ms", time.Since(startTime).Milliseconds(),
+				"outcome", outcome,
+			)
 			emit(Event{Final: &FinalEvent{Text: resp.Content}})
-			a.rec.RecordTurn("final", stepsCompleted+1, time.Since(startTime))
 			return nil
 		}
 
@@ -93,6 +118,7 @@ func (a *Agent) Run(ctx context.Context, turn Turn, emit func(Event)) error {
 				outcome = "error"
 			}
 			a.rec.RecordTool(call.Name, outcome, time.Since(toolStart))
+			toolsCalled = append(toolsCalled, call.Name)
 
 			if toolErr != nil {
 				emit(Event{ToolError: &ToolErrorEvent{Name: call.Name, Error: toolErr.Error()}})
@@ -116,6 +142,14 @@ func (a *Agent) Run(ctx context.Context, turn Turn, emit func(Event)) error {
 
 	emit(Event{Error: &ErrorEvent{Reason: ErrMaxSteps.Error()}})
 	a.rec.RecordTurn("max_steps", a.maxSteps, time.Since(startTime))
+	slog.Info("agent turn",
+		"turn_id", turnID,
+		"user_id", turn.UserID,
+		"steps", a.maxSteps,
+		"tools_called", toolsCalled,
+		"duration_ms", time.Since(startTime).Milliseconds(),
+		"outcome", "max_steps",
+	)
 	return ErrMaxSteps
 }
 

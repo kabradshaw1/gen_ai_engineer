@@ -11,6 +11,7 @@ import (
 
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/agent"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/auth"
+	"github.com/kabradshaw1/portfolio/go/ai-service/internal/guardrails"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/llm"
 )
 
@@ -27,8 +28,8 @@ type chatRequest struct {
 const maxUserMessageBytes = 4000
 
 // RegisterChatRoutes wires POST /chat onto r.
-func RegisterChatRoutes(r *gin.Engine, runner Runner, jwtSecret string) {
-	r.POST("/chat", func(c *gin.Context) {
+func RegisterChatRoutes(r *gin.Engine, runner Runner, jwtSecret string, limiter *guardrails.Limiter) {
+	r.POST("/chat", guardrails.Middleware(limiter), func(c *gin.Context) {
 		var req chatRequest
 		body, err := io.ReadAll(io.LimitReader(c.Request.Body, maxUserMessageBytes*4))
 		if err != nil {
