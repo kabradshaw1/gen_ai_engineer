@@ -20,6 +20,7 @@ type Product struct {
 
 type ProductListParams struct {
 	Category string
+	Query    string
 	Sort     string
 	Page     int
 	Limit    int

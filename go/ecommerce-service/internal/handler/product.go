@@ -29,6 +29,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	category := c.Query("category")
+	query := c.Query("q")
 	sort := c.DefaultQuery("sort", "created_at_desc")
 
 	if page < 1 {
@@ -40,6 +41,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 
 	params := model.ProductListParams{
 		Category: category,
+		Query:    query,
 		Sort:     sort,
 		Page:     page,
 		Limit:    limit,

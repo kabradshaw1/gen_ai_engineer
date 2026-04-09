@@ -28,11 +28,20 @@ func (r *ProductRepository) List(ctx context.Context, params model.ProductListPa
 	var args []any
 	argIdx := 1
 
-	whereClause := ""
+	var whereParts []string
 	if params.Category != "" {
-		whereClause = fmt.Sprintf(" WHERE category = $%d", argIdx)
+		whereParts = append(whereParts, fmt.Sprintf("category = $%d", argIdx))
 		args = append(args, params.Category)
 		argIdx++
+	}
+	if params.Query != "" {
+		whereParts = append(whereParts, fmt.Sprintf("name ILIKE '%%' || $%d || '%%'", argIdx))
+		args = append(args, params.Query)
+		argIdx++
+	}
+	whereClause := ""
+	if len(whereParts) > 0 {
+		whereClause = " WHERE " + strings.Join(whereParts, " AND ")
 	}
 
 	// Count query
