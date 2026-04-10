@@ -59,3 +59,21 @@ func TestMemRegistry_Schemas(t *testing.T) {
 		t.Errorf("missing schemas: %v", names)
 	}
 }
+
+func TestMemRegistry_All(t *testing.T) {
+	reg := NewMemRegistry()
+	reg.Register(&fakeTool{name: "a", schema: json.RawMessage(`{"type":"object"}`)})
+	reg.Register(&fakeTool{name: "b", schema: json.RawMessage(`{"type":"object"}`)})
+
+	all := reg.All()
+	if len(all) != 2 {
+		t.Fatalf("expected 2 tools, got %d", len(all))
+	}
+	names := map[string]bool{}
+	for _, tool := range all {
+		names[tool.Name()] = true
+	}
+	if !names["a"] || !names["b"] {
+		t.Errorf("missing tools: %v", names)
+	}
+}

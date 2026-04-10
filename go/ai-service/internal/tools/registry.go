@@ -27,6 +27,7 @@ type Registry interface {
 	Register(Tool)
 	Get(name string) (Tool, bool)
 	Schemas() []llm.ToolSchema
+	All() []Tool
 }
 
 // NewMemRegistry returns an in-memory Registry.
@@ -55,6 +56,15 @@ func (r *MemRegistry) Schemas() []llm.ToolSchema {
 			Description: t.Description(),
 			Parameters:  t.Schema(),
 		})
+	}
+	return out
+}
+
+// All returns every registered tool.
+func (r *MemRegistry) All() []Tool {
+	out := make([]Tool, 0, len(r.tools))
+	for _, t := range r.tools {
+		out = append(out, t)
 	}
 	return out
 }
