@@ -239,7 +239,116 @@ export default function GoPage() {
           </div>
         </section>
 
-        <div className="mt-6">
+        <section className="mt-12">
+          <h2 className="text-2xl font-semibold">
+            Stress Testing &amp; Scalability
+          </h2>
+          <p className="mt-4 text-muted-foreground leading-relaxed">
+            The ecommerce platform was stress-tested using{" "}
+            <a
+              href="https://k6.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+            >
+              k6
+            </a>{" "}
+            across all three services to find bottlenecks, fix them, and measure
+            the improvement. The full analysis is documented in a{" "}
+            <a
+              href="https://github.com/kabradshaw1/portfolio/blob/main/docs/adr/go-stress-testing.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+            >
+              stress testing ADR
+            </a>
+            .
+          </p>
+
+          <h3 className="mt-8 text-lg font-medium">What we found and fixed</h3>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm text-muted-foreground">
+              <thead>
+                <tr className="border-b text-left">
+                  <th className="pb-2 pr-4 font-medium text-foreground">
+                    Issue
+                  </th>
+                  <th className="pb-2 pr-4 font-medium text-foreground">
+                    Before
+                  </th>
+                  <th className="pb-2 pr-4 font-medium text-foreground">
+                    After
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                <tr>
+                  <td className="py-2 pr-4">Stock overselling (race condition)</td>
+                  <td className="py-2 pr-4">296 orders on stock=50</td>
+                  <td className="py-2 pr-4">
+                    0 oversells (SELECT FOR UPDATE)
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-4">Auth service under load</td>
+                  <td className="py-2 pr-4">57% error rate at 20 req/s</td>
+                  <td className="py-2 pr-4">
+                    0% errors (HPA scales to 3 replicas)
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-4">Checkout throughput</td>
+                  <td className="py-2 pr-4">34 req/s</td>
+                  <td className="py-2 pr-4">113 req/s (3.3x improvement)</td>
+                </tr>
+                <tr>
+                  <td className="py-2 pr-4">Product browse (50 VUs)</td>
+                  <td className="py-2 pr-4" colSpan={2}>
+                    195 req/s at p95=27ms, 0% errors — no fix needed
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 className="mt-8 text-lg font-medium">Fixes applied</h3>
+          <ul className="mt-2 list-disc pl-6 text-muted-foreground space-y-1">
+            <li>
+              <span className="text-foreground font-medium">
+                Stock race condition
+              </span>{" "}
+              — replaced bare UPDATE with SELECT FOR UPDATE in a transaction
+            </li>
+            <li>
+              <span className="text-foreground font-medium">
+                HPA autoscaling
+              </span>{" "}
+              — CPU-based autoscaling (70% target, 1-3 replicas) for auth and
+              ecommerce services
+            </li>
+            <li>
+              <span className="text-foreground font-medium">
+                Connection pool tuning
+              </span>{" "}
+              — explicit pgxpool config (25 max, 5 min conns, health checks)
+            </li>
+            <li>
+              <span className="text-foreground font-medium">
+                Server timeouts
+              </span>{" "}
+              — read/write/idle timeouts on the HTTP server
+            </li>
+          </ul>
+
+          <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+            k6 metrics are pushed to Prometheus via remote-write and correlated
+            with service-side metrics in a dedicated Grafana dashboard, showing
+            both the load generator and service perspective side-by-side.
+          </p>
+        </section>
+
+        <div className="mt-8">
           <Link
             href="/go/ecommerce"
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"

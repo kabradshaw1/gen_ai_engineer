@@ -20,6 +20,7 @@ I'm a developer who primarily focuses on **backend and AI integration**. This re
 ### Go — where I'm strongest
 - **`auth-service`** — JWT auth (register / login / refresh), PostgreSQL
 - **`ecommerce-service`** — products, cart, orders, Redis caching, RabbitMQ worker pool
+- **`ai-service`** — LLM-powered shopping assistant, tool-calling agent loop over Ollama (Qwen 2.5 14B), 9 tools wrapping the ecommerce API
 
 ### Java (Spring Boot)
 - **`task-service`** — task & project CRUD, PostgreSQL + JPA, Flyway migrations
@@ -87,7 +88,7 @@ For a full security assessment of the controls implemented in this project — s
 ```
 services/          Python AI microservices (ingestion, chat, debug)
 java/              Spring Boot microservices (task, activity, notification, gateway)
-go/                Go microservices (auth, ecommerce)
+go/                Go microservices (auth, ecommerce, ai-service)
 frontend/          Next.js app
 k8s/               Kubernetes manifests for all namespaces
 nginx/             Reverse-proxy config (local dev)
@@ -105,6 +106,7 @@ Every major design choice is written up in `docs/adr/`:
 - **`document-qa/`** — 7 notebooks walking through the RAG pipeline build
 - **`document-debugger/`** — 3 notebooks on code-aware chunking, the agent loop, and tool design
 - **`java-task-management/`** — 7 lessons on the Spring Boot stack (JPA, GraphQL, caching, analytics)
+- **`go-stress-testing.md`** — k6 load testing, bottleneck analysis, and data-driven performance fixes (stock race condition, HPA autoscaling, connection pool tuning)
 - Standalone markdown ADRs covering CI/CD, deployment topology, K8s migration, auth, and more
 
 ---
@@ -114,9 +116,10 @@ Every major design choice is written up in `docs/adr/`:
 If you're short on time:
 
 1. **`go/`** — my strongest language; start here for backend style
-2. **`services/`** — FastAPI + RAG + agent implementation
-3. **`docs/adr/document-qa/`** and **`docs/adr/document-debugger/`** — how and why the AI services were built
-4. **`.github/workflows/`** — CI/CD, security scanning, and deployment
-5. **`k8s/`** — production Kubernetes topology
+2. **`docs/adr/go-stress-testing.md`** — k6 load testing that found real bugs (stock overselling), with before/after metrics
+3. **`services/`** — FastAPI + RAG + agent implementation
+4. **`docs/adr/document-qa/`** and **`docs/adr/document-debugger/`** — how and why the AI services were built
+5. **`.github/workflows/`** — CI/CD, security scanning, and deployment
+6. **`k8s/`** — production Kubernetes topology
 
 Thanks for taking a look. — Kyle
