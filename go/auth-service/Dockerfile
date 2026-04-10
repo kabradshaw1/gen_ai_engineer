@@ -3,10 +3,11 @@ FROM migrate/migrate:v4.17.0 AS migrate
 FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /auth-service ./cmd/server
+COPY pkg/ ./pkg/
+COPY auth-service/go.mod auth-service/go.sum ./auth-service/
+RUN cd auth-service && go mod download
+COPY auth-service/ ./auth-service/
+RUN cd auth-service && CGO_ENABLED=0 GOOS=linux go build -o /auth-service ./cmd/server
 
 FROM alpine:3.19
 
@@ -18,7 +19,7 @@ RUN apk add --no-cache postgresql-client \
 
 COPY --from=builder /auth-service /auth-service
 COPY --from=migrate /usr/local/bin/migrate /usr/local/bin/migrate
-COPY migrations/ /migrations/
+COPY auth-service/migrations/ /migrations/
 
 USER appuser
 
