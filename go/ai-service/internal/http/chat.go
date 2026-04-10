@@ -13,6 +13,7 @@ import (
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/auth"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/guardrails"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/llm"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 // Runner is the subset of *agent.Agent the HTTP handler needs.
@@ -33,20 +34,20 @@ func RegisterChatRoutes(r *gin.Engine, runner Runner, jwtSecret string, limiter 
 		var req chatRequest
 		body, err := io.ReadAll(io.LimitReader(c.Request.Body, maxUserMessageBytes*4))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "read body"})
+			_ = c.Error(apperror.BadRequest("READ_BODY_ERROR", "failed to read request body"))
 			return
 		}
 		if err := json.Unmarshal(body, &req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			_ = c.Error(apperror.BadRequest("INVALID_JSON", "invalid json"))
 			return
 		}
 		if len(req.Messages) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "messages required"})
+			_ = c.Error(apperror.BadRequest("MESSAGES_REQUIRED", "messages required"))
 			return
 		}
 		for _, m := range req.Messages {
 			if m.Role == llm.RoleUser && len(m.Content) > maxUserMessageBytes {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "message too long"})
+				_ = c.Error(apperror.BadRequest("MESSAGE_TOO_LONG", "message too long"))
 				return
 			}
 		}
@@ -56,12 +57,13 @@ func RegisterChatRoutes(r *gin.Engine, runner Runner, jwtSecret string, limiter 
 		if authHeader != "" {
 			uid, err := auth.ParseBearer(authHeader, jwtSecret)
 			if err != nil {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+				_ = c.Error(apperror.Unauthorized("INVALID_TOKEN", err.Error()))
 				return
 			}
 			userID = uid
 		}
 
+		// Beyond this point we stream SSE — errors go via emit, not c.Error().
 		c.Writer.Header().Set("Content-Type", "text/event-stream")
 		c.Writer.Header().Set("Cache-Control", "no-cache")
 		c.Writer.Header().Set("Connection", "keep-alive")

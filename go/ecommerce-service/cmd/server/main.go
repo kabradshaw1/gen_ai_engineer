@@ -24,6 +24,7 @@ import (
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/repository"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/service"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/worker"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 type rabbitPublisher struct {
@@ -158,6 +159,7 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(middleware.Logging())
+	router.Use(apperror.ErrorHandler())
 	router.Use(middleware.Metrics())
 	router.Use(middleware.CORS(allowedOrigins))
 

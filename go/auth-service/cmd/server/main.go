@@ -19,6 +19,7 @@ import (
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/middleware"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/repository"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/service"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 func main() {
@@ -79,6 +80,7 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(middleware.Logging())
+	router.Use(apperror.ErrorHandler())
 	router.Use(middleware.Metrics())
 	router.Use(middleware.CORS(allowedOrigins))
 

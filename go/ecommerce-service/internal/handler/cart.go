@@ -9,6 +9,7 @@ import (
 
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/metrics"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 type CartServiceInterface interface {
@@ -29,13 +30,13 @@ func NewCartHandler(svc CartServiceInterface) *CartHandler {
 func (h *CartHandler) GetCart(c *gin.Context) {
 	userID, err := uuid.Parse(c.GetString("userId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		_ = c.Error(apperror.BadRequest("INVALID_ID", "invalid user ID"))
 		return
 	}
 
 	items, err := h.svc.GetCart(c.Request.Context(), userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get cart"})
+		_ = c.Error(err)
 		return
 	}
 
@@ -53,25 +54,25 @@ func (h *CartHandler) GetCart(c *gin.Context) {
 func (h *CartHandler) AddItem(c *gin.Context) {
 	userID, err := uuid.Parse(c.GetString("userId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		_ = c.Error(apperror.BadRequest("INVALID_ID", "invalid user ID"))
 		return
 	}
 
 	var req model.AddToCartRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		_ = c.Error(apperror.BadRequest("VALIDATION_ERROR", err.Error()))
 		return
 	}
 
 	productID, err := uuid.Parse(req.ProductID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product ID"})
+		_ = c.Error(apperror.BadRequest("INVALID_ID", "invalid product ID"))
 		return
 	}
 
 	item, err := h.svc.AddItem(c.Request.Context(), userID, productID, req.Quantity)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add item to cart"})
+		_ = c.Error(err)
 		return
 	}
 
@@ -82,24 +83,24 @@ func (h *CartHandler) AddItem(c *gin.Context) {
 func (h *CartHandler) UpdateQuantity(c *gin.Context) {
 	userID, err := uuid.Parse(c.GetString("userId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		_ = c.Error(apperror.BadRequest("INVALID_ID", "invalid user ID"))
 		return
 	}
 
 	itemID, err := uuid.Parse(c.Param("itemId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid item ID"})
+		_ = c.Error(apperror.BadRequest("INVALID_ID", "invalid item ID"))
 		return
 	}
 
 	var req model.UpdateCartRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		_ = c.Error(apperror.BadRequest("VALIDATION_ERROR", err.Error()))
 		return
 	}
 
 	if err := h.svc.UpdateQuantity(c.Request.Context(), itemID, userID, req.Quantity); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update quantity"})
+		_ = c.Error(err)
 		return
 	}
 
@@ -109,18 +110,18 @@ func (h *CartHandler) UpdateQuantity(c *gin.Context) {
 func (h *CartHandler) RemoveItem(c *gin.Context) {
 	userID, err := uuid.Parse(c.GetString("userId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		_ = c.Error(apperror.BadRequest("INVALID_ID", "invalid user ID"))
 		return
 	}
 
 	itemID, err := uuid.Parse(c.Param("itemId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid item ID"})
+		_ = c.Error(apperror.BadRequest("INVALID_ID", "invalid item ID"))
 		return
 	}
 
 	if err := h.svc.RemoveItem(c.Request.Context(), itemID, userID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove item"})
+		_ = c.Error(err)
 		return
 	}
 

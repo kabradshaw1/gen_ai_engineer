@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 type fakeProductService struct {
@@ -28,12 +29,18 @@ func (f *fakeProductService) Categories(ctx context.Context) ([]string, error) {
 	return nil, nil
 }
 
+func productTestRouter() *gin.Engine {
+	r := gin.New()
+	r.Use(apperror.ErrorHandler())
+	return r
+}
+
 func TestProductHandler_List_ForwardsQuery(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	svc := &fakeProductService{}
 	h := NewProductHandler(svc)
 
-	r := gin.New()
+	r := productTestRouter()
 	r.GET("/products", h.List)
 
 	req := httptest.NewRequest(http.MethodGet, "/products?q=jacket&limit=5", nil)

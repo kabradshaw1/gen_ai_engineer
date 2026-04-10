@@ -8,10 +8,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
-var ErrUserNotFound = errors.New("user not found")
-var ErrEmailExists = errors.New("email already registered")
+var ErrUserNotFound = apperror.NotFound("USER_NOT_FOUND", "user not found")
+var ErrEmailExists = apperror.Conflict("EMAIL_EXISTS", "email already registered")
 
 type UserRepository struct {
 	pool *pgxpool.Pool

@@ -2,16 +2,16 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
-var ErrCartItemNotFound = errors.New("cart item not found")
+var ErrCartItemNotFound = apperror.NotFound("CART_ITEM_NOT_FOUND", "cart item not found")
 
 type CartRepository struct {
 	pool *pgxpool.Pool

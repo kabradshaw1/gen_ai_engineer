@@ -2,18 +2,18 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 var (
-	ErrProductNotFound   = errors.New("product not found")
-	ErrInsufficientStock = errors.New("insufficient stock")
+	ErrProductNotFound   = apperror.NotFound("PRODUCT_NOT_FOUND", "product not found")
+	ErrInsufficientStock = apperror.Conflict("INSUFFICIENT_STOCK", "insufficient stock")
 )
 
 type ProductRepository struct {

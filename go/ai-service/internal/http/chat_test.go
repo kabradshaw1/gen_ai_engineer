@@ -14,6 +14,7 @@ import (
 
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/agent"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/llm"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 type fakeRunner struct {
@@ -32,6 +33,12 @@ func (f *fakeRunner) Run(ctx context.Context, turn agent.Turn, emit func(agent.E
 	return f.err
 }
 
+func chatTestRouter() *gin.Engine {
+	r := gin.New()
+	r.Use(apperror.ErrorHandler())
+	return r
+}
+
 func TestChatHandler_StreamsEventsAsSSE(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	runner := &fakeRunner{events: []agent.Event{
@@ -39,7 +46,7 @@ func TestChatHandler_StreamsEventsAsSSE(t *testing.T) {
 		{ToolResult: &agent.ToolResultEvent{Name: "search_products", Display: map[string]any{"kind": "product_list"}}},
 		{Final: &agent.FinalEvent{Text: "Here are some jackets."}},
 	}}
-	r := gin.New()
+	r := chatTestRouter()
 	RegisterChatRoutes(r, runner, "", nil)
 
 	body := strings.NewReader(`{"messages":[{"role":"user","content":"find a jacket"}]}`)
@@ -70,7 +77,7 @@ func TestChatHandler_StreamsEventsAsSSE(t *testing.T) {
 
 func TestChatHandler_BadBody(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	r := gin.New()
+	r := chatTestRouter()
 	RegisterChatRoutes(r, &fakeRunner{}, "", nil)
 	req := httptest.NewRequest(http.MethodPost, "/chat", strings.NewReader(`not json`))
 	req.Header.Set("Content-Type", "application/json")
@@ -94,7 +101,7 @@ func TestChatHandler_AcceptsValidJWT(t *testing.T) {
 		capturedJWT = JWTFromContext(ctx)
 	}
 
-	r := gin.New()
+	r := chatTestRouter()
 	RegisterChatRoutes(r, runner, secret, nil)
 	req := httptest.NewRequest(http.MethodPost, "/chat",
 		strings.NewReader(`{"messages":[{"role":"user","content":"hi"}]}`))
@@ -116,7 +123,7 @@ func TestChatHandler_AcceptsValidJWT(t *testing.T) {
 
 func TestChatHandler_RejectsInvalidJWT(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	r := gin.New()
+	r := chatTestRouter()
 	RegisterChatRoutes(r, &fakeRunner{}, "dev-secret-key-at-least-32-characters-long", nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/chat",

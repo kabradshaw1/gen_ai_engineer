@@ -12,6 +12,7 @@ import (
 
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/model"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/service"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 type fakeReturnService struct {
@@ -31,6 +32,12 @@ func (f *fakeReturnService) Initiate(ctx context.Context, userID, orderID uuid.U
 	return f.ret, f.err
 }
 
+func returnTestRouter() *gin.Engine {
+	r := gin.New()
+	r.Use(apperror.ErrorHandler())
+	return r
+}
+
 func TestReturnHandler_Initiate_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	user := uuid.New()
@@ -38,7 +45,7 @@ func TestReturnHandler_Initiate_Success(t *testing.T) {
 	svc := &fakeReturnService{ret: &model.Return{ID: uuid.New(), OrderID: order, UserID: user, Status: "requested", Reason: "doesn't fit"}}
 	h := NewReturnHandler(svc)
 
-	r := gin.New()
+	r := returnTestRouter()
 	r.POST("/orders/:id/returns", func(c *gin.Context) {
 		c.Set("userId", user.String())
 		h.Initiate(c)
@@ -68,7 +75,7 @@ func TestReturnHandler_Initiate_NotOwned(t *testing.T) {
 	svc := &fakeReturnService{err: service.ErrOrderNotOwned}
 	h := NewReturnHandler(svc)
 
-	r := gin.New()
+	r := returnTestRouter()
 	r.POST("/orders/:id/returns", func(c *gin.Context) {
 		c.Set("userId", user.String())
 		h.Initiate(c)
@@ -90,7 +97,7 @@ func TestReturnHandler_Initiate_BadBody(t *testing.T) {
 	svc := &fakeReturnService{}
 	h := NewReturnHandler(svc)
 
-	r := gin.New()
+	r := returnTestRouter()
 	user := uuid.New()
 	order := uuid.New()
 	r.POST("/orders/:id/returns", func(c *gin.Context) {

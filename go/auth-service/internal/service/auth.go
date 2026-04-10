@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -59,10 +59,10 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*model
 	}
 
 	if user.PasswordHash == nil {
-		return nil, errors.New("invalid credentials")
+		return nil, apperror.Unauthorized("INVALID_CREDENTIALS", "invalid email or password")
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(password)); err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, apperror.Unauthorized("INVALID_CREDENTIALS", "invalid email or password")
 	}
 
 	return s.generateTokens(user)
@@ -72,17 +72,17 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*model
 func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*model.AuthResponse, error) {
 	token, err := jwt.Parse(refreshToken, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
+			return nil, apperror.Unauthorized("INVALID_TOKEN", "unexpected signing method")
 		}
 		return s.jwtSecret, nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, apperror.Unauthorized("INVALID_TOKEN", "invalid or expired refresh token")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
-		return nil, errors.New("invalid token")
+		return nil, apperror.Unauthorized("INVALID_TOKEN", "invalid or expired refresh token")
 	}
 
 	sub, err := claims.GetSubject()
