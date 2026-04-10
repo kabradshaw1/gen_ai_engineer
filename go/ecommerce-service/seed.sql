@@ -36,5 +36,5 @@ WHERE NOT EXISTS (SELECT 1 FROM products);
 -- To regenerate the hash after rotating the password:
 --   python3 -c "import bcrypt; print(bcrypt.hashpw(b'<new-password>', bcrypt.gensalt(10)).decode())"
 INSERT INTO users (email, password_hash, name)
-SELECT 'smoke@kylebradshaw.dev', '__SMOKE_BCRYPT_HASH__', 'Smoke Test'
+SELECT 'smoke@kylebradshaw.dev', '$2b$10$px5RkKZH6ntWA1jg.QR/tuzJQdBuYgyztCBaDfHK1dNS1oUNmWjIG', 'Smoke Test'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'smoke@kylebradshaw.dev');
