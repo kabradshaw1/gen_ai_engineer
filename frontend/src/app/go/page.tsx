@@ -169,6 +169,41 @@ export default function GoPage() {
   classDef disabled stroke-dasharray: 5 5,opacity:0.5`}
             />
           </div>
+
+          <h3 className="mt-10 text-xl font-semibold">Agent Loop</h3>
+          <p className="mt-4 text-muted-foreground leading-relaxed">
+            The agent runs a synchronous ReAct-style loop — call the LLM,
+            dispatch any requested tools, feed results back into the
+            conversation, and repeat until the LLM produces a final answer.
+            Bounded by 8 steps and a 30-second wall-clock timeout. Tool errors
+            become conversation context for the LLM to handle, not hard
+            failures.
+          </p>
+          <div className="mt-6">
+            <MermaidDiagram
+              chart={`flowchart TD
+  START([Receive user message])
+  LLM[Call Ollama<br/>history + tool schemas]
+  DECIDE{Tool calls<br/>in response?}
+  DISPATCH[Dispatch tool to<br/>ecommerce API]
+  APPEND[Append result to<br/>conversation history]
+  GUARD{Max 8 steps<br/>or 30s?}
+  REFUSAL{Refusal<br/>detected?}
+  TAG[Tag outcome as refused]
+  STREAM([Stream final answer<br/>via SSE])
+  START --> LLM
+  LLM --> DECIDE
+  DECIDE -->|Yes| DISPATCH
+  DISPATCH --> APPEND
+  APPEND --> GUARD
+  GUARD -->|No| LLM
+  GUARD -->|Yes| STREAM
+  DECIDE -->|No| REFUSAL
+  REFUSAL -->|Yes| TAG
+  TAG --> STREAM
+  REFUSAL -->|No| STREAM`}
+            />
+          </div>
         </section>
 
         <div className="mt-6">
