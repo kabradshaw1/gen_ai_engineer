@@ -92,6 +92,7 @@ java/                       # Java microservices (Spring Boot, Gradle multi-proj
 go/                         # Go microservices
 ├── auth-service/           # JWT auth (register, login, refresh), PostgreSQL
 ├── ecommerce-service/      # Products, cart, orders, Redis caching, RabbitMQ worker pool
+├── ai-service/             # Agent loop over Ollama tool-calling, 9 tools wrapping ecommerce
 ├── k8s/                    # Go-specific K8s manifests
 frontend/                   # Next.js + shadcn/ui
 ├── src/app/                # Pages: ai/ (rag, debug), java/ (tasks), go/ (ecommerce)
@@ -108,7 +109,8 @@ docs/adr/                   # Architecture Decision Records
 ├── document-qa/            # 7 notebooks (Python/FastAPI, RAG pipeline)
 ├── document-debugger/      # 3 notebooks (code-aware chunking, agent loop, tools)
 ├── java-task-management/   # 7 markdown lessons (Spring Boot, JPA, GraphQL, etc.)
-├── *.md                    # Standalone ADRs (CI/CD, deployment, K8s migration, etc.)
+├── go-ai-service/          # 1 notebook (agent harness in Go, tool registry, evals)
+├── *.md                    # Standalone ADRs (CI/CD, deployment, K8s migration, analytics, auth, RAG re-evaluation, etc.)
 .github/workflows/          # CI/CD: ci.yml (Python + frontend), java-ci.yml, go-ci.yml
 docker-compose.yml          # Python services + nginx + Qdrant
 ```
