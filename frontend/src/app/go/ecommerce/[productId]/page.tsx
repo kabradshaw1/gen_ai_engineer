@@ -14,7 +14,7 @@ interface Product {
   name: string;
   description: string;
   category: string;
-  priceCents: number;
+  price: number;
   stock: number;
   imageUrl?: string;
 }
@@ -132,7 +132,7 @@ export default function ProductDetailPage() {
           </p>
           <h1 className="mt-2 text-2xl font-bold">{product.name}</h1>
           <p className="mt-4 text-xl font-semibold">
-            {formatPrice(product.priceCents)}
+            {formatPrice(product.price)}
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
             {product.description}

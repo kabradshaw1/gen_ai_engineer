@@ -9,7 +9,7 @@ import { goApiFetch } from "@/lib/go-api";
 interface Order {
   id: string;
   createdAt: string;
-  totalCents: number;
+  total: number;
   status: string;
 }
 
@@ -91,7 +91,7 @@ export default function OrdersPage() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-semibold">{formatPrice(order.totalCents)}</p>
+                <p className="font-semibold">{formatPrice(order.total)}</p>
                 <p className={`text-sm font-medium ${statusColor(order.status)}`}>
                   {order.status}
                 </p>
