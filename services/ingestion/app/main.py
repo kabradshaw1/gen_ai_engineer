@@ -11,6 +11,7 @@ from qdrant_client import QdrantClient
 from app.chunker import chunk_pages
 from app.config import settings
 from app.embedder import embed_texts
+from app.metrics import CHUNKS_CREATED, instrumentator
 from app.pdf_parser import extract_pages
 from app.store import QdrantStore
 
@@ -26,6 +27,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
 )
+
+instrumentator.instrument(app).expose(app, include_in_schema=False)
 
 _store: QdrantStore | None = None
 
@@ -142,6 +145,8 @@ async def ingest(
     except Exception as e:
         logger.error("Vector store error: %s", e, exc_info=True)
         raise HTTPException(status_code=503, detail="Vector store unavailable")
+
+    CHUNKS_CREATED.labels(service="ingestion").inc(len(chunks))
 
     return {
         "status": "success",

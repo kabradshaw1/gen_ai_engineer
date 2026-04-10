@@ -1,4 +1,8 @@
+import time
+
 import httpx
+
+from app.metrics import EMBEDDING_DURATION
 
 
 async def embed_texts(
@@ -13,6 +17,7 @@ async def embed_texts(
     if not texts:
         return []
 
+    start = time.perf_counter()
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{ollama_base_url}/api/embed",
@@ -21,5 +26,8 @@ async def embed_texts(
         )
         response.raise_for_status()
         data = response.json()
+    EMBEDDING_DURATION.labels(service="ingestion", model=model).observe(
+        time.perf_counter() - start
+    )
 
     return data["embeddings"]

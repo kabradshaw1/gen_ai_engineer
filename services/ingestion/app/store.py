@@ -1,3 +1,4 @@
+import time
 import uuid
 
 from qdrant_client import QdrantClient
@@ -9,6 +10,8 @@ from qdrant_client.models import (
     PointStruct,
     VectorParams,
 )
+
+from app.metrics import QDRANT_OPERATION_DURATION
 
 
 class QdrantStore:
@@ -48,18 +51,26 @@ class QdrantStore:
             )
             for chunk, vector in zip(chunks, vectors)
         ]
+        start = time.perf_counter()
         self.client.upsert(
             collection_name=self.collection_name,
             points=points,
         )
+        QDRANT_OPERATION_DURATION.labels(
+            service="ingestion", operation="upsert"
+        ).observe(time.perf_counter() - start)
 
     def list_documents(self) -> list[dict]:
+        start = time.perf_counter()
         records, _ = self.client.scroll(
             collection_name=self.collection_name,
             limit=10000,
             with_payload=True,
             with_vectors=False,
         )
+        QDRANT_OPERATION_DURATION.labels(
+            service="ingestion", operation="scroll"
+        ).observe(time.perf_counter() - start)
 
         docs: dict[str, dict] = {}
         for record in records:
@@ -93,6 +104,7 @@ class QdrantStore:
         if not records:
             return 0
 
+        start = time.perf_counter()
         self.client.delete(
             collection_name=self.collection_name,
             points_selector=Filter(
@@ -104,6 +116,9 @@ class QdrantStore:
                 ]
             ),
         )
+        QDRANT_OPERATION_DURATION.labels(
+            service="ingestion", operation="delete"
+        ).observe(time.perf_counter() - start)
         return len(records)
 
     def delete_collection(self, collection_name: str) -> None:
