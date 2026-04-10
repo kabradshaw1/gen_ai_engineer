@@ -1,7 +1,7 @@
-.PHONY: preflight preflight-python preflight-frontend preflight-e2e preflight-java preflight-java-integration preflight-go preflight-security preflight-ai-service preflight-ai-service-evals
+.PHONY: preflight preflight-python preflight-frontend preflight-e2e preflight-java preflight-java-integration preflight-go preflight-security preflight-ai-service preflight-ai-service-evals grafana-sync grafana-sync-check
 
 # Run all CI checks locally before pushing
-preflight: preflight-python preflight-frontend preflight-security preflight-java preflight-go
+preflight: grafana-sync-check preflight-python preflight-frontend preflight-security preflight-java preflight-go
 	@echo "\n✅ All preflight checks passed"
 
 # --- Python services ---
@@ -74,6 +74,17 @@ preflight-ai-service: $(GOLANGCI_LINT)
 preflight-ai-service-evals:
 	@echo "\n=== ai-service: mocked-LLM evals ==="
 	cd go/ai-service && go test -tags=eval ./internal/evals/... -count=1
+
+# --- Grafana dashboard <-> ConfigMap sync ---
+# CI fails if monitoring/grafana/dashboards/system-overview.json drifts from
+# the JSON embedded in k8s/monitoring/configmaps/grafana-dashboards.yml.
+# Run `make grafana-sync` after editing the dashboard JSON.
+grafana-sync:
+	@echo "\n=== Grafana: regenerating ConfigMap from dashboard JSON ==="
+	python3 scripts/grafana_sync.py
+
+grafana-sync-check:
+	python3 scripts/grafana_sync.py --check
 
 # --- Security scans ---
 preflight-security:
