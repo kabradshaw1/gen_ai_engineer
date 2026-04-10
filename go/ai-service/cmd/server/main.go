@@ -149,7 +149,13 @@ func main() {
 	apphttp.RegisterChatRoutes(router, a, jwtSecret, limiter)
 	apphttp.RegisterMetricsRoute(router)
 
-	srv := &http.Server{Addr: ":" + port, Handler: router}
+	srv := &http.Server{
+		Addr:         ":" + port,
+		Handler:      router,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 120 * time.Second, // longer for LLM streaming responses
+		IdleTimeout:  60 * time.Second,
+	}
 
 	go func() {
 		slog.Info("ai-service starting",
