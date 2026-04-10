@@ -125,6 +125,52 @@ export default function GoPage() {
           </div>
         </section>
 
+        <section className="mt-12">
+          <h2 className="text-2xl font-semibold">AI Shopping Assistant</h2>
+          <p className="mt-4 text-muted-foreground leading-relaxed">
+            An LLM-powered shopping assistant that wraps a tool-calling agent
+            loop around the ecommerce backend. Users ask natural language
+            questions — the agent decides which tools to invoke, calls the
+            ecommerce API, and synthesizes a streamed response. Built in Go
+            with Ollama (Qwen 2.5 14B).
+          </p>
+
+          <h3 className="mt-10 text-xl font-semibold">Tool Catalog</h3>
+          <p className="mt-4 text-muted-foreground leading-relaxed">
+            The agent has access to nine tools organized into three domains.
+            Catalog tools are public; order, cart, and return tools require JWT
+            authentication. Checkout is deliberately excluded — the agent can
+            advise but not transact.
+          </p>
+          <div className="mt-6">
+            <MermaidDiagram
+              chart={`flowchart LR
+  AGENT((Agent<br/>Qwen 2.5 14B))
+  subgraph Catalog ["Catalog (public)"]
+    T1[search_products<br/>query + max_price]
+    T2[get_product<br/>full details by ID]
+    T3[check_inventory<br/>stock count]
+  end
+  subgraph Orders ["Orders (auth-scoped)"]
+    T4[list_orders<br/>last 20 orders]
+    T5[get_order<br/>single order detail]
+    T6[summarize_orders<br/>LLM-generated summary]
+  end
+  subgraph CartReturns ["Cart & Returns (auth-scoped)"]
+    T7[view_cart<br/>items + total]
+    T8[add_to_cart<br/>product + quantity]
+    T9[initiate_return<br/>order item + reason]
+  end
+  AGENT --> Catalog
+  AGENT --> Orders
+  AGENT --> CartReturns
+  X[place_order<br/>deliberately excluded]:::disabled
+  AGENT -.-x X
+  classDef disabled stroke-dasharray: 5 5,opacity:0.5`}
+            />
+          </div>
+        </section>
+
         <div className="mt-6">
           <Link
             href="/go/ecommerce"
