@@ -37,24 +37,6 @@ export default function Home() {
         {/* Sections */}
         <h2 className="mt-16 text-2xl font-semibold">Portfolio</h2>
         <div className="mt-6 grid gap-4">
-          <Link href="/ai" className="block">
-            <Card className="hover:ring-foreground/20 transition-all">
-              <CardHeader>
-                <CardTitle>AI / Gen AI Engineer</CardTitle>
-                <CardDescription>
-                  Document Q&A Assistant built with RAG, FastAPI, Qdrant, and
-                  Ollama
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">
-                  A full-stack retrieval-augmented generation system
-                  demonstrating PDF ingestion, vector search, prompt
-                  engineering, and streaming LLM responses.
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
           <Link href="/go" className="block">
             <Card className="hover:ring-foreground/20 transition-all">
               <CardHeader>
@@ -67,8 +49,27 @@ export default function Home() {
               <CardContent>
                 <p className="text-muted-foreground text-sm">
                   Microservices architecture with JWT authentication, product
-                  catalog, cart, orders, and asynchronous worker pools — deployed
-                  on Kubernetes.
+                  catalog, cart, orders, and asynchronous worker pools —
+                  deployed on Kubernetes.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/aws" className="block">
+            <Card className="hover:ring-foreground/20 transition-all">
+              <CardHeader>
+                <CardTitle>Infrastructure & Deployment</CardTitle>
+                <CardDescription>
+                  Production Kubernetes on a home server, AWS-ready with
+                  Terraform and EKS
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">
+                  Two deployment architectures for the same services — a
+                  cost-effective Minikube cluster with Cloudflare Tunnel serving
+                  production today, and a one-command AWS deployment with EKS,
+                  RDS, ElastiCache, and Amazon MQ.
                 </p>
               </CardContent>
             </Card>
@@ -90,21 +91,20 @@ export default function Home() {
               </CardContent>
             </Card>
           </Link>
-          <Link href="/aws" className="block">
+          <Link href="/ai" className="block">
             <Card className="hover:ring-foreground/20 transition-all">
               <CardHeader>
-                <CardTitle>Infrastructure & Deployment</CardTitle>
+                <CardTitle>AI Engineer</CardTitle>
                 <CardDescription>
-                  Production Kubernetes on a home server, AWS-ready with
-                  Terraform and EKS
+                  Document Q&A Assistant built with RAG, FastAPI, Qdrant, and
+                  Ollama
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-sm">
-                  Two deployment architectures for the same services — a
-                  cost-effective Minikube cluster with Cloudflare Tunnel serving
-                  production today, and a one-command AWS deployment with EKS,
-                  RDS, ElastiCache, and Amazon MQ.
+                  A full-stack retrieval-augmented generation system
+                  demonstrating PDF ingestion, vector search, prompt
+                  engineering, and streaming LLM responses.
                 </p>
               </CardContent>
             </Card>
