@@ -204,6 +204,37 @@ export default function GoPage() {
   REFUSAL -->|No| STREAM`}
             />
           </div>
+
+          <h3 className="mt-10 text-xl font-semibold">
+            Request flow: Product search
+          </h3>
+          <p className="mt-4 text-muted-foreground leading-relaxed">
+            A concrete example: the user asks &ldquo;find me a waterproof
+            jacket under $150.&rdquo; The frontend streams Server-Sent Events
+            from the AI service, which orchestrates between Ollama and the
+            ecommerce API.
+          </p>
+          <div className="mt-6">
+            <MermaidDiagram
+              chart={`sequenceDiagram
+  participant U as User
+  participant FE as Frontend
+  participant AI as AI Service
+  participant OL as Ollama
+  participant EC as Ecommerce API
+  U->>FE: "find waterproof jackets under $150"
+  FE->>AI: POST /chat (SSE stream, Bearer JWT)
+  AI->>OL: Chat(messages, tool_schemas)
+  OL-->>AI: tool_call: search_products
+  AI-->>FE: SSE: tool_call {name, args}
+  AI->>EC: GET /products?q=waterproof+jacket&max_price=15000
+  EC-->>AI: [{name:"Storm Jacket", price:12999}]
+  AI->>OL: Chat(messages + tool_result)
+  OL-->>AI: final text
+  AI-->>FE: SSE: final {text}
+  FE-->>U: "I found 3 waterproof jackets under $150..."`}
+            />
+          </div>
         </section>
 
         <div className="mt-6">
