@@ -90,6 +90,25 @@ export default function Home() {
               </CardContent>
             </Card>
           </Link>
+          <Link href="/aws" className="block">
+            <Card className="hover:ring-foreground/20 transition-all">
+              <CardHeader>
+                <CardTitle>Infrastructure & Deployment</CardTitle>
+                <CardDescription>
+                  Production Kubernetes on a home server, AWS-ready with
+                  Terraform and EKS
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">
+                  Two deployment architectures for the same services — a
+                  cost-effective Minikube cluster with Cloudflare Tunnel serving
+                  production today, and a one-command AWS deployment with EKS,
+                  RDS, ElastiCache, and Amazon MQ.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
     </div>
