@@ -4,6 +4,10 @@ set -euo pipefail
 # Deploy all services to Minikube
 # Prerequisites: minikube running, kubectl configured
 # Usage: ./k8s/deploy.sh
+#
+# Manifest discovery is directory-based: kubectl apply -f <dir>/
+# applies every .yml in the directory. Adding a new manifest file
+# to an existing directory is all that's needed — no script changes.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -24,7 +28,6 @@ else
   echo "    WARN: java-secrets.yml not found — copy java-secrets.yml.template and fill in values"
 fi
 
-echo "==> Applying secrets..."
 if [ -f "$REPO_DIR/go/k8s/secrets/go-secrets.yml" ]; then
   kubectl apply -f "$REPO_DIR/go/k8s/secrets/go-secrets.yml"
 else
@@ -34,8 +37,9 @@ fi
 echo "==> Applying monitoring RBAC..."
 kubectl apply -f "$SCRIPT_DIR/monitoring/rbac/"
 
-echo "==> Applying monitoring PVCs..."
+echo "==> Applying PVCs..."
 kubectl apply -f "$SCRIPT_DIR/monitoring/pvc/"
+kubectl apply -f "$REPO_DIR/java/k8s/volumes/"
 
 echo "==> Applying ConfigMaps..."
 kubectl apply -f "$SCRIPT_DIR/ai-services/configmaps/"
@@ -43,31 +47,16 @@ kubectl apply -f "$REPO_DIR/java/k8s/configmaps/"
 kubectl apply -f "$SCRIPT_DIR/monitoring/configmaps/"
 kubectl apply -f "$REPO_DIR/go/k8s/configmaps/"
 
-echo "==> Deploying ai-services (Qdrant + Ollama)..."
-kubectl apply -f "$SCRIPT_DIR/ai-services/services/ollama.yml"
-kubectl apply -f "$SCRIPT_DIR/ai-services/deployments/qdrant.yml"
-kubectl apply -f "$SCRIPT_DIR/ai-services/services/qdrant.yml"
+echo "==> Deploying ai-services (Python)..."
+kubectl apply -f "$SCRIPT_DIR/ai-services/deployments/"
+kubectl apply -f "$SCRIPT_DIR/ai-services/services/"
 
 echo "==> Waiting for Qdrant..."
 kubectl wait --for=condition=available --timeout=120s deployment/qdrant -n ai-services
 
-echo "==> Deploying ai-services (Python services)..."
-kubectl apply -f "$SCRIPT_DIR/ai-services/deployments/ingestion.yml"
-kubectl apply -f "$SCRIPT_DIR/ai-services/deployments/chat.yml"
-kubectl apply -f "$SCRIPT_DIR/ai-services/deployments/debug.yml"
-kubectl apply -f "$SCRIPT_DIR/ai-services/services/ingestion.yml"
-kubectl apply -f "$SCRIPT_DIR/ai-services/services/chat.yml"
-kubectl apply -f "$SCRIPT_DIR/ai-services/services/debug.yml"
-
-echo "==> Deploying java-tasks infrastructure..."
-kubectl apply -f "$REPO_DIR/java/k8s/deployments/postgres.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/deployments/mongodb.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/deployments/redis.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/deployments/rabbitmq.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/services/postgres.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/services/mongodb.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/services/redis.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/services/rabbitmq.yml"
+echo "==> Deploying java-tasks..."
+kubectl apply -f "$REPO_DIR/java/k8s/deployments/"
+kubectl apply -f "$REPO_DIR/java/k8s/services/"
 
 echo "==> Waiting for java-tasks infrastructure..."
 kubectl wait --for=condition=available --timeout=120s deployment/postgres -n java-tasks
@@ -75,39 +64,18 @@ kubectl wait --for=condition=available --timeout=120s deployment/mongodb -n java
 kubectl wait --for=condition=available --timeout=120s deployment/redis -n java-tasks
 kubectl wait --for=condition=available --timeout=120s deployment/rabbitmq -n java-tasks
 
-echo "==> Deploying java-tasks application services..."
-kubectl apply -f "$REPO_DIR/java/k8s/deployments/task-service.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/deployments/activity-service.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/deployments/notification-service.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/deployments/gateway-service.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/services/task-service.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/services/activity-service.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/services/notification-service.yml"
-kubectl apply -f "$REPO_DIR/java/k8s/services/gateway-service.yml"
-
 echo "==> Running go-ecommerce migration jobs..."
-kubectl apply -f "$REPO_DIR/go/k8s/jobs/auth-service-migrate.yml"
-kubectl apply -f "$REPO_DIR/go/k8s/jobs/ecommerce-service-migrate.yml"
+kubectl apply -f "$REPO_DIR/go/k8s/jobs/"
 
 echo "==> Deploying go-ecommerce services..."
-kubectl apply -f "$REPO_DIR/go/k8s/deployments/auth-service.yml"
-kubectl apply -f "$REPO_DIR/go/k8s/deployments/ecommerce-service.yml"
-kubectl apply -f "$REPO_DIR/go/k8s/deployments/ai-service.yml"
-kubectl apply -f "$REPO_DIR/go/k8s/services/auth-service.yml"
-kubectl apply -f "$REPO_DIR/go/k8s/services/ecommerce-service.yml"
-kubectl apply -f "$REPO_DIR/go/k8s/services/ai-service.yml"
-kubectl apply -f "$REPO_DIR/go/k8s/hpa/auth-hpa.yml"
-kubectl apply -f "$REPO_DIR/go/k8s/hpa/ecommerce-hpa.yml"
+kubectl apply -f "$REPO_DIR/go/k8s/deployments/"
+kubectl apply -f "$REPO_DIR/go/k8s/services/"
+kubectl apply -f "$REPO_DIR/go/k8s/hpa/"
 
 echo "==> Deploying monitoring..."
-kubectl apply -f "$SCRIPT_DIR/monitoring/deployments/prometheus.yml"
-kubectl apply -f "$SCRIPT_DIR/monitoring/services/prometheus.yml"
-kubectl apply -f "$SCRIPT_DIR/monitoring/deployments/kube-state-metrics.yml"
-kubectl apply -f "$SCRIPT_DIR/monitoring/services/kube-state-metrics.yml"
-kubectl apply -f "$SCRIPT_DIR/monitoring/daemonsets/node-exporter.yml"
-kubectl apply -f "$SCRIPT_DIR/monitoring/services/node-exporter.yml"
-kubectl apply -f "$SCRIPT_DIR/monitoring/deployments/grafana.yml"
-kubectl apply -f "$SCRIPT_DIR/monitoring/services/grafana.yml"
+kubectl apply -f "$SCRIPT_DIR/monitoring/deployments/"
+kubectl apply -f "$SCRIPT_DIR/monitoring/services/"
+kubectl apply -f "$SCRIPT_DIR/monitoring/daemonsets/"
 
 echo "==> Applying Ingress resources..."
 kubectl apply -f "$SCRIPT_DIR/ai-services/ingress.yml"
@@ -137,7 +105,7 @@ echo ""
 echo "    Namespaces:"
 echo "      ai-services    — Python AI services + Qdrant"
 echo "      java-tasks     — Java microservices + databases"
-echo "      go-ecommerce   — Go auth + ecommerce services"
+echo "      go-ecommerce   — Go auth + ecommerce + AI agent services"
 echo "      monitoring     — Prometheus + Grafana"
 echo ""
 echo "    Next steps:"
