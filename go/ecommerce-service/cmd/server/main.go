@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -63,7 +64,17 @@ func main() {
 	defer cancel()
 
 	// Connect to Postgres
-	pool, err := pgxpool.New(ctx, databaseURL)
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		log.Fatalf("failed to parse database URL: %v", err)
+	}
+	poolConfig.MaxConns = 25
+	poolConfig.MinConns = 5
+	poolConfig.MaxConnIdleTime = 5 * time.Minute
+	poolConfig.MaxConnLifetime = 30 * time.Minute
+	poolConfig.HealthCheckPeriod = 30 * time.Second
+
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
@@ -130,9 +141,15 @@ func main() {
 	healthHandler := handler.NewHealthHandler(pool, redisClient)
 
 	// Start order processor worker
+	workerConcurrency := 3
+	if v := os.Getenv("WORKER_CONCURRENCY"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			workerConcurrency = n
+		}
+	}
 	processor := worker.NewOrderProcessor(orderRepo, productRepo, productSvc)
 	go func() {
-		if err := processor.StartConsumer(ctx, ch, 3); err != nil {
+		if err := processor.StartConsumer(ctx, ch, workerConcurrency); err != nil {
 			slog.Error("order processor failed", "error", err)
 		}
 	}()
@@ -168,8 +185,11 @@ func main() {
 
 	// Start server
 	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: router,
+		Addr:         ":" + port,
+		Handler:      router,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	go func() {

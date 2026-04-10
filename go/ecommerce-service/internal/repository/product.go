@@ -131,15 +131,32 @@ func (r *ProductRepository) Categories(ctx context.Context) ([]string, error) {
 }
 
 func (r *ProductRepository) DecrementStock(ctx context.Context, productID uuid.UUID, qty int) error {
-	result, err := r.pool.Exec(ctx,
-		"UPDATE products SET stock = stock - $1, updated_at = NOW() WHERE id = $2 AND stock >= $1",
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	var stock int
+	err = tx.QueryRow(ctx,
+		"SELECT stock FROM products WHERE id = $1 FOR UPDATE",
+		productID,
+	).Scan(&stock)
+	if err != nil {
+		return fmt.Errorf("select for update: %w", err)
+	}
+
+	if stock < qty {
+		return fmt.Errorf("insufficient stock: have %d, need %d", stock, qty)
+	}
+
+	_, err = tx.Exec(ctx,
+		"UPDATE products SET stock = stock - $1, updated_at = NOW() WHERE id = $2",
 		qty, productID,
 	)
 	if err != nil {
-		return fmt.Errorf("decrement stock: %w", err)
+		return fmt.Errorf("update stock: %w", err)
 	}
-	if result.RowsAffected() == 0 {
-		return ErrInsufficientStock
-	}
-	return nil
+
+	return tx.Commit(ctx)
 }
