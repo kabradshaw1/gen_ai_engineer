@@ -101,9 +101,12 @@ Added `HorizontalPodAutoscaler` for both ecommerce-service and auth-service:
 
 **Impact:** Auth service (the primary bottleneck) can scale to 3 replicas under bcrypt load. Conservative scale-down prevents flapping.
 
+### 6. Metrics-server and deploy script
+Enabled Minikube's metrics-server addon (required for HPA to read CPU usage). Refactored `k8s/deploy.sh` to use directory-based `kubectl apply -f <dir>/` so new manifests are auto-discovered — no script changes needed when adding resources.
+
 ## Before/After Comparison
 
-Re-tests were run after deploying the fixes to Minikube (excluding HPA, which requires `kubectl apply`).
+Re-tests were run after deploying all fixes to Minikube, including HPA with metrics-server enabled.
 
 | Scenario | Metric | Before | After | Change |
 |----------|--------|--------|-------|--------|
@@ -112,11 +115,13 @@ Re-tests were run after deploying the fixes to Minikube (excluding HPA, which re
 | Checkout (30 VUs) | overall p95 | 5.14s | 41ms | **99% improvement** (fast-fail) |
 | Checkout (30 VUs) | throughput | 34 req/s | 113 req/s | **3.3x improvement** |
 | Stock contention (50 VUs) | overselling | 296 orders on stock=50 | stock=0 (not negative) | **Fixed** |
-| Auth registration (50 VUs) | error rate | 98% | 97.8% | No change (HPA not applied) |
+| Stock contention (50 VUs) | iterations | 286 | 878 | **3x more** (HPA handled auth load) |
+| Auth login (20 req/s) | error rate | 57% | **0%** | **HPA eliminated 503s** |
+| Auth login (20 req/s) | p95 | 24.87s | **16.16s** | **35% improvement** |
+| Auth login (20 req/s) | throughput | ~10 req/s | **12.5 req/s** | **25% improvement** |
+| Auth registration (50 VUs) | error rate | 98% | 98% | Burst too short for HPA |
 
-The stock race condition fix is the most impactful change — `SELECT FOR UPDATE` prevents concurrent transactions from overselling inventory. The checkout throughput improvement is due to faster connection handling from the explicit pgxpool configuration.
-
-Auth service performance is unchanged because the HPA manifests haven't been applied yet. Once applied (`kubectl apply -f go/k8s/hpa/`), the auth service can scale to 3 replicas under bcrypt load, which should roughly triple its throughput from ~10 req/s to ~30 req/s.
+The stock race condition fix (`SELECT FOR UPDATE`) eliminates overselling. The HPA scaled the auth service to 3 replicas under sustained login load, eliminating 503 errors entirely and improving throughput by 25%. Registration bursts (1 minute) are too short for the HPA's 60-second stabilization window — this is expected behavior, as HPA is designed for sustained load, not spikes.
 
 ## Performance Summary
 
