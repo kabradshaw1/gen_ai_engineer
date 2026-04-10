@@ -22,32 +22,33 @@ data:
         static_configs:
           - targets: ["host.minikube.internal:9835"]
 
-      - job_name: "qdrant"
-        metrics_path: /healthz
+      - job_name: "kube-state-metrics"
         static_configs:
-          - targets: ["qdrant.ai-services.svc.cluster.local:6333"]
+          - targets: ["kube-state-metrics.monitoring.svc.cluster.local:8080"]
 
-      - job_name: "ingestion"
-        metrics_path: /health
+      - job_name: "node-exporter"
         static_configs:
-          - targets: ["ingestion.ai-services.svc.cluster.local:8000"]
+          - targets: ["node-exporter.monitoring.svc.cluster.local:9100"]
 
-      - job_name: "chat"
-        metrics_path: /health
-        static_configs:
-          - targets: ["chat.ai-services.svc.cluster.local:8000"]
-
-      - job_name: "debug"
-        metrics_path: /health
-        static_configs:
-          - targets: ["debug.ai-services.svc.cluster.local:8000"]
-
-      - job_name: "gateway-service"
-        metrics_path: /actuator/health
-        static_configs:
-          - targets: ["gateway-service.java-tasks.svc.cluster.local:8080"]
-
-      - job_name: "grafana"
-        metrics_path: /api/health
-        static_configs:
-          - targets: ["grafana.monitoring.svc.cluster.local:3000"]
+      - job_name: "k8s-pods"
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: service
