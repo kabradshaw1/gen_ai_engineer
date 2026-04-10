@@ -2,15 +2,15 @@ package service
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/google/uuid"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/metrics"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
-var ErrEmptyCart = errors.New("cart is empty")
+var ErrEmptyCart = apperror.BadRequest("EMPTY_CART", "cart is empty")
 
 type OrderRepo interface {
 	Create(ctx context.Context, userID uuid.UUID, total int, items []model.OrderItem) (*model.Order, error)

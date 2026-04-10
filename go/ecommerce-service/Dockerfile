@@ -3,9 +3,11 @@ FROM migrate/migrate:v4.17.0 AS migrate
 FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
-COPY go.mod go.sum ./
+COPY pkg/ ./pkg/
+COPY ecommerce-service/go.mod ecommerce-service/go.sum ./ecommerce-service/
+WORKDIR /app/ecommerce-service
 RUN go mod download
-COPY . .
+COPY ecommerce-service/ /app/ecommerce-service/
 RUN CGO_ENABLED=0 GOOS=linux go build -o /ecommerce-service ./cmd/server
 
 FROM alpine:3.19
@@ -18,8 +20,8 @@ RUN apk add --no-cache postgresql-client \
 
 COPY --from=builder /ecommerce-service /ecommerce-service
 COPY --from=migrate /usr/local/bin/migrate /usr/local/bin/migrate
-COPY migrations/ /migrations/
-COPY seed.sql /seed.sql
+COPY ecommerce-service/migrations/ /migrations/
+COPY ecommerce-service/seed.sql /seed.sql
 
 USER appuser
 

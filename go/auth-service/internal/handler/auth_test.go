@@ -18,6 +18,7 @@ import (
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/handler"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/model"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/service"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 // --- mock repo ---
@@ -66,6 +67,13 @@ func (m *mockUserRepo) UpsertGoogleUser(_ context.Context, _ string, _ string, _
 	return nil, fmt.Errorf("not implemented")
 }
 
+// testRouter returns a Gin engine with ErrorHandler middleware for tests.
+func testRouter() *gin.Engine {
+	r := gin.New()
+	r.Use(apperror.ErrorHandler())
+	return r
+}
+
 // --- tests ---
 
 func TestRegisterHandler(t *testing.T) {
@@ -75,7 +83,7 @@ func TestRegisterHandler(t *testing.T) {
 	svc := service.NewAuthService(repo, "test-secret", 900000, 604800000)
 	h := handler.NewAuthHandler(svc, nil)
 
-	router := gin.New()
+	router := testRouter()
 	router.POST("/auth/register", h.Register)
 
 	body, _ := json.Marshal(model.RegisterRequest{
@@ -113,7 +121,7 @@ func TestRegisterHandler_InvalidEmail(t *testing.T) {
 	svc := service.NewAuthService(repo, "test-secret", 900000, 604800000)
 	h := handler.NewAuthHandler(svc, nil)
 
-	router := gin.New()
+	router := testRouter()
 	router.POST("/auth/register", h.Register)
 
 	body, _ := json.Marshal(map[string]string{
@@ -192,7 +200,7 @@ func TestGoogleLogin_Success(t *testing.T) {
 	gc := &fakeGoogleClient{info: &google.UserInfo{Email: "a@example.com", Name: "A", Picture: "http://pic"}}
 	h := handler.NewAuthHandler(svc, gc)
 
-	router := gin.New()
+	router := testRouter()
 	router.POST("/auth/google", h.GoogleLogin)
 
 	body := strings.NewReader(`{"code":"abc","redirectUri":"http://localhost:3000/go/login"}`)
@@ -216,7 +224,7 @@ func TestGoogleLogin_Success(t *testing.T) {
 func TestGoogleLogin_BadRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := handler.NewAuthHandler(&fakeAuthService{}, &fakeGoogleClient{})
-	router := gin.New()
+	router := testRouter()
 	router.POST("/auth/google", h.GoogleLogin)
 
 	req := httptest.NewRequest(http.MethodPost, "/auth/google", strings.NewReader(`{}`))
@@ -233,7 +241,7 @@ func TestGoogleLogin_GoogleError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	gc := &fakeGoogleClient{err: errors.New("bad code")}
 	h := handler.NewAuthHandler(&fakeAuthService{}, gc)
-	router := gin.New()
+	router := testRouter()
 	router.POST("/auth/google", h.GoogleLogin)
 
 	body := strings.NewReader(`{"code":"abc","redirectUri":"http://localhost:3000/go/login"}`)
@@ -256,7 +264,7 @@ func TestGoogleLogin_ServiceError(t *testing.T) {
 	}
 	gc := &fakeGoogleClient{info: &google.UserInfo{Email: "a@example.com"}}
 	h := handler.NewAuthHandler(svc, gc)
-	router := gin.New()
+	router := testRouter()
 	router.POST("/auth/google", h.GoogleLogin)
 
 	body := strings.NewReader(`{"code":"abc","redirectUri":"http://localhost:3000/go/login"}`)

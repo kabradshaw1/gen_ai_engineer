@@ -37,7 +37,9 @@ services:
       retries: 5
 
   auth-service:
-    build: ./auth-service
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
     ports:
       - "8091:8091"
     environment:
@@ -52,7 +54,9 @@ services:
         condition: service_healthy
 
   ecommerce-service:
-    build: ./ecommerce-service
+    build:
+      context: .
+      dockerfile: ecommerce-service/Dockerfile
     ports:
       - "8092:8092"
     environment:
@@ -71,7 +75,9 @@ services:
         condition: service_healthy
 
   ai-service:
-    build: ./ai-service
+    build:
+      context: .
+      dockerfile: ai-service/Dockerfile
     ports:
       - "8093:8093"
     environment:

@@ -3,7 +3,6 @@ package agent
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -13,10 +12,11 @@ import (
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/llm"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/metrics"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/tools"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 // ErrMaxSteps is returned when the agent loop exceeds the configured step cap.
-var ErrMaxSteps = errors.New("agent: max steps exceeded")
+var ErrMaxSteps = apperror.Internal("MAX_STEPS_EXCEEDED", "agent: max steps exceeded")
 
 // Turn is one invocation of the agent — a user id plus the full conversation so far.
 type Turn struct {

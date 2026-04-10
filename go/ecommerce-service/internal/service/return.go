@@ -2,14 +2,14 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
-var ErrOrderNotOwned = errors.New("order not owned by user")
+var ErrOrderNotOwned = apperror.NotFound("ORDER_NOT_FOUND", "order not found")
 
 type ReturnRepositoryInterface interface {
 	Create(ctx context.Context, orderID, userID uuid.UUID, itemIDs []string, reason string) (*model.Return, error)

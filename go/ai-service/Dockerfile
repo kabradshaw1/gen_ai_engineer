@@ -1,9 +1,11 @@
 FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
-COPY go.mod go.sum ./
+COPY pkg/ ./pkg/
+COPY ai-service/go.mod ai-service/go.sum ./ai-service/
+WORKDIR /app/ai-service
 RUN go mod download
-COPY . .
+COPY ai-service/ /app/ai-service/
 RUN CGO_ENABLED=0 GOOS=linux go build -o /ai-service ./cmd/server
 
 FROM alpine:3.19

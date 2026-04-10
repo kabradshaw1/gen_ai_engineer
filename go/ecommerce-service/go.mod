@@ -7,10 +7,13 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.9.1
+	github.com/kabradshaw1/portfolio/go/pkg v0.0.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.18.0
 )
+
+replace github.com/kabradshaw1/portfolio/go/pkg => ../pkg
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

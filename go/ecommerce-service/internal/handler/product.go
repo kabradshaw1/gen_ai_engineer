@@ -10,6 +10,7 @@ import (
 
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/metrics"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 type ProductServiceInterface interface {
@@ -50,7 +51,7 @@ func (h *ProductHandler) List(c *gin.Context) {
 
 	products, total, err := h.svc.List(c.Request.Context(), params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list products"})
+		_ = c.Error(err)
 		return
 	}
 
@@ -65,13 +66,13 @@ func (h *ProductHandler) List(c *gin.Context) {
 func (h *ProductHandler) GetByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product ID"})
+		_ = c.Error(apperror.BadRequest("INVALID_ID", "invalid product ID"))
 		return
 	}
 
 	product, err := h.svc.GetByID(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		_ = c.Error(err)
 		return
 	}
 
@@ -82,7 +83,7 @@ func (h *ProductHandler) GetByID(c *gin.Context) {
 func (h *ProductHandler) Categories(c *gin.Context) {
 	categories, err := h.svc.Categories(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list categories"})
+		_ = c.Error(err)
 		return
 	}
 

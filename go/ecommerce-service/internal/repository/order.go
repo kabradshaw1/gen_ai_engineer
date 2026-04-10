@@ -2,16 +2,16 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kabradshaw1/portfolio/go/ecommerce-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
-var ErrOrderNotFound = errors.New("order not found")
+var ErrOrderNotFound = apperror.NotFound("ORDER_NOT_FOUND", "order not found")
 
 type OrderRepository struct {
 	pool *pgxpool.Pool

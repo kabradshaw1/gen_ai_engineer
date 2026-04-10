@@ -21,6 +21,7 @@ import (
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/metrics"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/tools"
 	"github.com/kabradshaw1/portfolio/go/ai-service/internal/tools/clients"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 func main() {
@@ -88,6 +89,7 @@ func main() {
 	// HTTP
 	router := gin.New()
 	router.Use(gin.Recovery())
+	router.Use(apperror.ErrorHandler())
 
 	apphttp.RegisterHealthRoutes(router, map[string]apphttp.ReadyCheck{
 		"llm": func() error {

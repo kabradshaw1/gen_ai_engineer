@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/google"
 	"github.com/kabradshaw1/portfolio/go/auth-service/internal/model"
+	"github.com/kabradshaw1/portfolio/go/pkg/apperror"
 )
 
 type AuthServiceInterface interface {
@@ -32,12 +33,12 @@ func NewAuthHandler(svc AuthServiceInterface, googleClient GoogleClientInterface
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req model.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		_ = c.Error(apperror.BadRequest("VALIDATION_ERROR", err.Error()))
 		return
 	}
 	resp, err := h.svc.Register(c.Request.Context(), req.Email, req.Password, req.Name)
 	if err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		_ = c.Error(err)
 		return
 	}
 	c.JSON(http.StatusOK, resp)
@@ -46,12 +47,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req model.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		_ = c.Error(apperror.BadRequest("VALIDATION_ERROR", err.Error()))
 		return
 	}
 	resp, err := h.svc.Login(c.Request.Context(), req.Email, req.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email or password"})
+		_ = c.Error(err)
 		return
 	}
 	c.JSON(http.StatusOK, resp)
@@ -60,12 +61,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var req model.RefreshRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		_ = c.Error(apperror.BadRequest("VALIDATION_ERROR", err.Error()))
 		return
 	}
 	resp, err := h.svc.Refresh(c.Request.Context(), req.RefreshToken)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired refresh token"})
+		_ = c.Error(err)
 		return
 	}
 	c.JSON(http.StatusOK, resp)
@@ -74,17 +75,17 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 func (h *AuthHandler) GoogleLogin(c *gin.Context) {
 	var req model.GoogleLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		_ = c.Error(apperror.BadRequest("VALIDATION_ERROR", err.Error()))
 		return
 	}
 	info, err := h.googleClient.ExchangeCode(c.Request.Context(), req.Code, req.RedirectURI)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "google authentication failed"})
+		_ = c.Error(apperror.Unauthorized("GOOGLE_AUTH_FAILED", "google authentication failed"))
 		return
 	}
 	resp, err := h.svc.AuthenticateGoogleUser(c.Request.Context(), info.Email, info.Name, info.Picture)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to authenticate user"})
+		_ = c.Error(err)
 		return
 	}
 	c.JSON(http.StatusOK, resp)
