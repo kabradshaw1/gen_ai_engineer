@@ -15,7 +15,7 @@ export default function GoPage() {
           command-line tools with a focus on clean, efficient design.
         </p>
         <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-          Both Go services expose Prometheus metrics to a live{" "}
+          All three Go services expose Prometheus metrics to a live{" "}
           <a
             href="https://grafana.kylebradshaw.dev/d/system-overview/system-overview?orgId=1&from=now-1h&to=now&timezone=browser"
             target="_blank"
@@ -35,16 +35,18 @@ export default function GoPage() {
         <p className="mt-4 text-muted-foreground leading-relaxed">
           Microservices ecommerce platform built with Go, demonstrating
           RESTful API design, JWT authentication, PostgreSQL, Redis caching,
-          and asynchronous order processing with RabbitMQ. Deployed using
+          asynchronous order processing with RabbitMQ, and an LLM-powered
+          shopping assistant with tool-calling agent loop. Deployed using
           Docker and Kubernetes.
         </p>
 
         <h3 className="mt-6 text-lg font-medium">Tech Stack</h3>
         <ul className="mt-2 list-disc pl-6 text-muted-foreground space-y-1">
-          <li>2 Go microservices (auth-service, ecommerce-service)</li>
+          <li>3 Go microservices (auth, ecommerce, ai-service)</li>
           <li>Gin HTTP framework with JWT authentication</li>
+          <li>Ollama (Qwen 2.5 14B) tool-calling agent with 9 tools</li>
           <li>PostgreSQL (users, products, carts, orders)</li>
-          <li>Redis product caching for fast reads</li>
+          <li>Redis caching + rate limiting</li>
           <li>RabbitMQ asynchronous order processing</li>
           <li>Prometheus metrics instrumentation</li>
           <li>Next.js + TypeScript frontend</li>
