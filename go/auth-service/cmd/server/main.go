@@ -25,6 +25,11 @@ import (
 	"github.com/kabradshaw1/portfolio/go/pkg/tracing"
 )
 
+const (
+	accessTokenTTLMs  = 900_000     // 15 minutes
+	refreshTokenTTLMs = 604_800_000 // 7 days
+)
+
 func main() {
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
@@ -68,7 +73,17 @@ func main() {
 	defer func() { _ = shutdownTracer(ctx) }()
 
 	// Connect to Postgres
-	pool, err := pgxpool.New(ctx, databaseURL)
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		log.Fatalf("failed to parse database config: %v", err)
+	}
+	poolConfig.MaxConns = 10
+	poolConfig.MinConns = 2
+	poolConfig.MaxConnIdleTime = 5 * time.Minute
+	poolConfig.MaxConnLifetime = 30 * time.Minute
+	poolConfig.HealthCheckPeriod = 30 * time.Second
+
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
@@ -85,7 +100,7 @@ func main() {
 		OnStateChange: resilience.ObserveStateChange,
 	})
 	userRepo := repository.NewUserRepository(pool, pgBreaker)
-	authSvc := service.NewAuthService(userRepo, jwtSecret, 900000, 604800000)
+	authSvc := service.NewAuthService(userRepo, jwtSecret, accessTokenTTLMs, refreshTokenTTLMs)
 	googleClient := google.NewClient(googleClientID, googleClientSecret, googleTokenURL, googleUserinfoURL)
 	authHandler := handler.NewAuthHandler(authSvc, googleClient)
 	healthHandler := handler.NewHealthHandler(pool)
@@ -109,8 +124,11 @@ func main() {
 
 	// Start server
 	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: router,
+		Addr:         ":" + port,
+		Handler:      router,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	go func() {
