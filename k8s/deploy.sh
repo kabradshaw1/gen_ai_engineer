@@ -31,6 +31,12 @@ else
   echo "    WARN: go-secrets.yml not found — create go/k8s/secrets/go-secrets.yml with jwt-secret"
 fi
 
+echo "==> Applying monitoring RBAC..."
+kubectl apply -f "$SCRIPT_DIR/monitoring/rbac/"
+
+echo "==> Applying monitoring PVCs..."
+kubectl apply -f "$SCRIPT_DIR/monitoring/pvc/"
+
 echo "==> Applying ConfigMaps..."
 kubectl apply -f "$SCRIPT_DIR/ai-services/configmaps/"
 kubectl apply -f "$REPO_DIR/java/k8s/configmaps/"
@@ -88,6 +94,10 @@ kubectl apply -f "$REPO_DIR/go/k8s/services/ecommerce-service.yml"
 echo "==> Deploying monitoring..."
 kubectl apply -f "$SCRIPT_DIR/monitoring/deployments/prometheus.yml"
 kubectl apply -f "$SCRIPT_DIR/monitoring/services/prometheus.yml"
+kubectl apply -f "$SCRIPT_DIR/monitoring/deployments/kube-state-metrics.yml"
+kubectl apply -f "$SCRIPT_DIR/monitoring/services/kube-state-metrics.yml"
+kubectl apply -f "$SCRIPT_DIR/monitoring/daemonsets/node-exporter.yml"
+kubectl apply -f "$SCRIPT_DIR/monitoring/services/node-exporter.yml"
 kubectl apply -f "$SCRIPT_DIR/monitoring/deployments/grafana.yml"
 kubectl apply -f "$SCRIPT_DIR/monitoring/services/grafana.yml"
 
@@ -109,6 +119,7 @@ kubectl wait --for=condition=available --timeout=180s deployment/gateway-service
 kubectl wait --for=condition=available --timeout=180s deployment/go-auth-service -n go-ecommerce
 kubectl wait --for=condition=available --timeout=180s deployment/go-ecommerce-service -n go-ecommerce
 kubectl wait --for=condition=available --timeout=120s deployment/prometheus -n monitoring
+kubectl wait --for=condition=available --timeout=120s deployment/kube-state-metrics -n monitoring
 kubectl wait --for=condition=available --timeout=120s deployment/grafana -n monitoring
 
 echo ""
