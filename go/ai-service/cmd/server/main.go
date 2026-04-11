@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -175,6 +176,7 @@ func runServe() {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(otelgin.Middleware("ai-service"))
+	router.Use(corsMiddleware(getenv("ALLOWED_ORIGINS", "http://localhost:3000")))
 	router.Use(apperror.ErrorHandler())
 
 	apphttp.RegisterHealthRoutes(router, map[string]apphttp.ReadyCheck{
@@ -287,4 +289,28 @@ func getenv(key, def string) string {
 		return v
 	}
 	return def
+}
+
+func corsMiddleware(allowedOrigins string) gin.HandlerFunc {
+	originSet := make(map[string]bool)
+	for _, o := range strings.Split(allowedOrigins, ",") {
+		originSet[strings.TrimSpace(o)] = true
+	}
+
+	return func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		if originSet[origin] {
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Requested-With")
+			c.Header("Access-Control-Allow-Credentials", "true")
+		}
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
 }

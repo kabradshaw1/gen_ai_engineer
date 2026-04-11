@@ -10,3 +10,4 @@ data:
   ECOMMERCE_URL: "http://go-ecommerce-service:8092"
   REDIS_URL: "redis://redis.java-tasks.svc.cluster.local:6379"
   OTEL_EXPORTER_OTLP_ENDPOINT: "jaeger.monitoring.svc.cluster.local:4317"
+  ALLOWED_ORIGINS: "http://localhost:3000,https://kylebradshaw.dev"
